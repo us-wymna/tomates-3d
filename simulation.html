@@ -70,7 +70,12 @@
   #endcard button { border: 1px solid #222; background: #222; color: #fff; border-radius: 999px; padding: 9px 18px; font-size: 14px; cursor: pointer; min-height: 42px; margin-top: 8px; }
   #endClose { float: right; border: 1px solid #ccc !important; background: #fff !important; color: #222 !important; border-radius: 999px !important; width: 34px !important; height: 34px !important; min-height: 0 !important; padding: 0 !important; font-size: 16px !important; margin-top: 0 !important; }
   #hud.orders .row { display: none; }
-  #ui.orders #chapters { display: none; }
+  #ui.orders #chapSelect { display: none; }
+  #ui select {
+    border: 1px solid #ccc; background: #fff; border-radius: 999px;
+    padding: 7px 8px; font-size: 14px; cursor: pointer; min-height: 38px; color: #222;
+    max-width: 150px;
+  }
   #orders {
     display: none;
     position: fixed; left: 50%; bottom: 104px; transform: translateX(-50%);
@@ -119,8 +124,7 @@
   <button id="btnZoomIn" title="Zoom avant">+</button>
   <button id="btnCollapse" title="Réduire la barre">⌃</button>
   <a class="simlink" href="index.html">← Visionneuse</a>
-  <span id="chapters"></span>
-  <span class="note">Dessin agrandi pour la lisibilité — les mesures affichées sont les vraies.</span>
+  <select id="chapSelect" aria-label="Aller à un chapitre"></select>
 </div>
 <button id="uiRestore">☰ Commandes</button>
 <div id="hud">
@@ -1086,12 +1090,23 @@ uiRestore.addEventListener("click", function () {
   ui.classList.remove("collapsed");
   uiRestore.classList.remove("show");
 });
-var chapWrap = document.getElementById("chapters");
+var chapSelect = document.getElementById("chapSelect");
+var chapPlaceholder = document.createElement("option");
+chapPlaceholder.textContent = "Chapitres…";
+chapPlaceholder.value = "";
+chapSelect.appendChild(chapPlaceholder);
 chapters.forEach(function (ch) {
-  var b = document.createElement("button");
-  b.textContent = ch.label;
-  b.addEventListener("click", function () { T = ch.t; ended = false; endcard.classList.remove("open"); setPlaying(true); });
-  chapWrap.appendChild(b);
+  var o = document.createElement("option");
+  o.textContent = ch.label;
+  o.value = ch.t;
+  chapSelect.appendChild(o);
+});
+chapSelect.addEventListener("change", function () {
+  if (chapSelect.value === "") return;
+  T = parseFloat(chapSelect.value);
+  ended = false; endcard.classList.remove("open");
+  setPlaying(true);
+  chapSelect.value = "";
 });
 scrub.addEventListener("input", function () {
   T = parseFloat(scrub.value) / 100 * T_END;
@@ -1143,9 +1158,13 @@ if (params.get("free") === "1") {
   var sc0 = shotCam(T);
   freeCam.x = sc0.x; freeCam.y = sc0.y; freeCam.k = sc0.k;
 }
-if (window.innerWidth < 560) {
-  ui.classList.add("collapsed");
-  uiRestore.classList.add("show");
+/* barre réduite par défaut (sur tous les écrans) : la scène est dégagée,
+   un seul bouton « ☰ Commandes » pour rouvrir */
+ui.classList.add("collapsed");
+uiRestore.classList.add("show");
+if (params.get("ui") === "open") {
+  ui.classList.remove("collapsed");
+  uiRestore.classList.remove("show");
 }
 btnPlay.textContent = playing ? "Pause" : "Lecture";
 

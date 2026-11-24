@@ -152,6 +152,8 @@
     <button id="wxSun" class="active">☀️ Été</button>
     <button id="wxRain">🌧 Pluie</button>
     <button id="wxSnow">❄️ Neige 5 cm</button>
+    <button id="wxSnow15">❄️ Neige 15 cm</button>
+    <button id="wxSand">🏜 Sable</button>
     <button id="btnTires" title="Zoomer sur les pneus">🔍 Pneus</button>
   </div>
   <div id="ordTraction">Simulation — terrain sec, vitesse normale.</div>
@@ -323,6 +325,7 @@ for (var fi = 0; fi < 8; fi++) {
 
 /* ---------- intempéries : neige au sol, flaques (visibles selon le temps choisi) ---------- */
 var snowGround = el("rect", { x: -14, y: -0.06, width: 44, height: 0.075, fill: "#ffffff", opacity: 0 }, gGround);
+var sandGround = el("rect", { x: -14, y: -0.06, width: 44, height: 0.075, fill: "#e0c896", opacity: 0 }, gGround);
 var puddles = el("g", { opacity: 0 }, gGround);
 [[-4, 0.10], [6, 0.14], [15, 0.11]].forEach(function (p) {
   el("ellipse", { cx: p[0], cy: -0.035, rx: p[1], ry: 0.016, fill: "#7fa8c9", opacity: 0.8 }, puddles);
@@ -665,6 +668,21 @@ el("circle", { cx: 0.02, cy: 0.325, r: 0.010, fill: "#2b6cb0" }, robotG);
 /* pastille interdiction */
 el("circle", { cx: -0.19, cy: 0.31, r: 0.032, fill: "none", stroke: "#c0392b", "stroke-width": 0.009 }, robotG);
 el("line", { x1: -0.212, y1: 0.288, x2: -0.168, y2: 0.332, stroke: "#c0392b", "stroke-width": 0.009 }, robotG);
+/* 5 yeux : avant (sous le panier), arrière, 2 latéraux, 1 sur le bras (au poignet, plus bas) */
+function eyePod(x, y, dir) {
+  el("rect", { x: x - 0.02, y: y - 0.011, width: 0.04, height: 0.022, rx: 0.008, fill: "#2b2b2b", stroke: "#111111", "stroke-width": 0.004 }, robotG);
+  var halo = el("circle", { cx: x + dir * 0.024, cy: y, r: 0.017, fill: "#22d3ee", opacity: 0 }, robotG);
+  var lens = el("circle", { cx: x + dir * 0.024, cy: y, r: 0.008, fill: "#155e75", stroke: "#0e3a4a", "stroke-width": 0.003 }, robotG);
+  return { lens: lens, halo: halo };
+}
+var eyeFront = eyePod(0.30, 0.212, 1);
+var eyeRear = eyePod(-0.315, 0.27, -1);
+var eyeSide1 = eyePod(-0.08, 0.372, 1);
+var eyeSide2 = eyePod(0.12, 0.372, 1);
+function setEyeGlow(eye, on) {
+  eye.lens.setAttribute("fill", on ? "#67e8f9" : "#155e75");
+  eye.halo.setAttribute("opacity", on ? 0.45 : 0);
+}
 /* aération */
 el("circle", { cx: 0.22, cy: 0.31, r: 0.024, fill: "#c5c9cc", stroke: "#9aa0a3", "stroke-width": 0.006 }, robotG);
 for (var v = -1; v <= 1; v++) el("line", { x1: 0.22 + v * 0.011, y1: 0.292, x2: 0.22 + v * 0.011, y2: 0.328, stroke: "#8a8f93", "stroke-width": 0.005 }, robotG);
@@ -718,6 +736,11 @@ var foreG = el("g", {}, elbowG);
 truss(foreG, ARM_L2, 0.028);
 var wristG = el("g", { transform: "translate(0," + ARM_L2 + ")" }, foreG);
 el("rect", { x: -0.035, y: -0.012, width: 0.07, height: 0.03, rx: 0.008, fill: "#4a4a4a" }, wristG);
+/* œil du bras, sur le poignet : il verrouille le fruit à cueillir */
+el("circle", { cx: -0.048, cy: 0.006, r: 0.011, fill: "#2b2b2b" }, wristG);
+var armHalo = el("circle", { cx: -0.048, cy: 0.006, r: 0.018, fill: "#22d3ee", opacity: 0 }, wristG);
+var armLens = el("circle", { cx: -0.048, cy: 0.006, r: 0.006, fill: "#155e75", stroke: "#0e3a4a", "stroke-width": 0.003 }, wristG);
+var eyeArm = { lens: armLens, halo: armHalo };
 var fingerL = el("rect", { x: -0.032, y: 0.018, width: 0.014, height: 0.075, rx: 0.006, fill: "#222222" }, wristG);
 var fingerR = el("rect", { x: 0.018, y: 0.018, width: 0.014, height: 0.075, rx: 0.006, fill: "#222222" }, wristG);
 el("rect", { x: 0.042, y: 0.0, width: 0.02, height: 0.045, rx: 0.006, fill: "#6b6f73" }, wristG);
@@ -740,6 +763,10 @@ for (var sd = 0; sd < 14; sd++) {
 }
 /* flèches de mesure (dessinées dans le monde) */
 var dimLines = el("g", {}, gFx);
+/* cône de vision des yeux + projections des roues sur terrain difficile */
+var visionCone = el("polygon", { points: "0,0 0,0 0,0", fill: "#22d3ee", opacity: 0 }, gFx);
+var churnDots = [];
+for (var cd = 0; cd < 6; cd++) churnDots.push(el("circle", { cx: 0, cy: 0, r: 0.016, fill: "#ffffff", opacity: 0 }, gFx));
 
 /* ---------- plan de la récolte ---------- */
 var DRIVE_V = 0.65, RETURN_V = 1.0, PICK_DUR = 3.2;
@@ -897,6 +924,7 @@ var distTravelled = 0, lastRX = -8.3;
 /* ---------- mode ordres : état persistant du champ et de la file ---------- */
 var mode = "cine";
 var spraySegs = []; /* {tree, t0, t1} du plan courant (vide en cinématique) */
+var scans = []; /* pauses de détection des yeux {tree, t0, t1} */
 var ordState = { pos: -8.3, face: 1, basket: [], basketPlaces: 0, binCount: 0, branchState: {} };
 var ordQueue = []; /* ordres en attente : {kind, ...} */
 var ordJob = null; /* ordre en cours d'exécution */
@@ -923,7 +951,7 @@ function updateScene(T) {
       ln.setAttribute("x2", (rx2 - 6).toFixed(1)); ln.setAttribute("y2", (ry + 26).toFixed(1));
     });
   }
-  if (weather === "snow") {
+  if (weather.indexOf("snow") === 0) {
     snowDots.forEach(function (dt, i) {
       var sx = (hash(i + 31) * (viewW + 40) + Math.sin(T * 0.7 + i) * 18) % (viewW + 40) - 20;
       var sy = (hash(i + 53) * (viewH + 40) + T * 26) % (viewH + 40) - 20;
@@ -942,7 +970,8 @@ function updateScene(T) {
   var bob = drivingAt(T) ? Math.sin(T * 9) * 0.004 : 0;
   robotG.setAttribute("transform", "translate(" + rx.toFixed(3) + "," + bob.toFixed(3) + ") scale(" + f.toFixed(3) + ",1)");
   var spinDeg = distTravelled / WHEEL_R * 180 / Math.PI;
-  wheels.forEach(function (w) { w.spin.setAttribute("transform", "rotate(" + spinDeg.toFixed(1) + ")"); });
+  var slip = (hardTerrain() && drivingAt(T)) ? Math.sin(T * 11) * 7 : 0; /* les roues « se débattent » sur terrain difficile */
+  wheels.forEach(function (w) { w.spin.setAttribute("transform", "rotate(" + (spinDeg + slip).toFixed(1) + ")"); });
   /* basculement du panier */
   var tiltU = 0;
   if (T >= buildPlan.dumpT0 + 0.6) tiltU = smooth((T - buildPlan.dumpT0 - 0.6) / 1.0);
@@ -959,6 +988,7 @@ function updateScene(T) {
     return 1 - smooth((t - buildPlan.dumpT0 - 4.6) / 0.8);
   }
   var armPose = REST, grip = 0, suction = 0;
+  var wristWorld = null;
   var shoulderWorld = { x: rx + f * SHOULDER.x, y: SHOULDER.y + bob };
   var cur = null;
   picks.forEach(function (pk, pi) {
@@ -970,6 +1000,7 @@ function updateScene(T) {
     var br = fieldData[pk.tree].branches[pk.idx];
     var target = { x: br.x, y: br.y };
     var sol = solveArm(target.x, target.y, shoulderWorld.x, shoulderWorld.y);
+    wristWorld = { x: shoulderWorld.x + ARM_L1 * Math.sin(sol.phi1) + ARM_L2 * Math.sin(sol.phi1 + sol.phi2), y: shoulderWorld.y + ARM_L1 * Math.cos(sol.phi1) + ARM_L2 * Math.cos(sol.phi1 + sol.phi2) };
     if (ph < 0.28) {
       var u = smooth(ph / 0.28);
       armPose = { phi1: lerp(REST.phi1, sol.phi1, u), phi2: lerp(REST.phi2, sol.phi2, u), wristRel: lerp(REST.wristRel, sol.wristRel, u) };
@@ -989,7 +1020,17 @@ function updateScene(T) {
     ring.setAttribute("r", TOM_R + 0.02 + Math.sin(T * 6) * 0.006);
   } else {
     ring.setAttribute("opacity", 0);
-    if (!measureOpen) activeDims = null;
+    if (!measureOpen) {
+      /* mesure pneu PAR DÉFAUT pendant la conduite sur terrain difficile,
+         comme la mesure du bras pendant la cueillette */
+      if (hardTerrain() && drivingAt(T)) {
+        var wwx = rx + f * 0.26, wwy = WHEEL_R + bob;
+        activeDims = {
+          lines: [{ x1: wwx, y1: wwy + WHEEL_R, x2: wwx, y2: wwy - WHEEL_R, arrow: true }],
+          label: { x: wwx, y: wwy + WHEEL_R + 0.14, text: "Pneu ballon Ø 300 mm · crampons 15 mm · force motrice " + driveForce() + " %" }
+        };
+      } else activeDims = null;
+    }
   }
   /* position de chaque tomate, fonction pure de T */
   pickedTomatoes.forEach(function (pt, pi) {
@@ -1055,6 +1096,42 @@ function updateScene(T) {
   cone.setAttribute("opacity", suction ? 0.55 : 0);
   streaks.setAttribute("opacity", suction ? 0.9 : 0);
   if (suction) streaks.setAttribute("transform", "translate(0," + ((T * 0.06) % 0.02).toFixed(3) + ")");
+  /* yeux : cône de vision + halos, projections des roues sur terrain difficile */
+  var scanActive = null;
+  scans.forEach(function (sg) { if (T >= sg.t0 && T <= sg.t1) scanActive = sg; });
+  var drivingHard = drivingAt(T) && hardTerrain();
+  setEyeGlow(eyeArm, !!cur);
+  setEyeGlow(eyeFront, !!scanActive || drivingHard);
+  setEyeGlow(eyeSide1, !!scanActive);
+  setEyeGlow(eyeSide2, !!scanActive);
+  setEyeGlow(eyeRear, drivingAt(T) && f === -1);
+  var coneEye = null, coneTarget = null;
+  if (scanActive) {
+    coneEye = { x: rx + f * 0.335, y: 0.27 + bob };
+    coneTarget = { x: fieldData[scanActive.tree].x, y: 0.55 };
+  } else if (cur && wristWorld) {
+    var cbr = fieldData[cur.pk.tree].branches[cur.pk.idx];
+    coneEye = wristWorld;
+    coneTarget = { x: cbr.x, y: cbr.y };
+  }
+  if (coneEye && coneTarget) {
+    var cdx = coneTarget.x - coneEye.x, cdy = coneTarget.y - coneEye.y;
+    var clen = Math.hypot(cdx, cdy) || 1;
+    var cpx = -cdy / clen * 0.14, cpy = cdx / clen * 0.14;
+    visionCone.setAttribute("points", coneEye.x.toFixed(3) + "," + coneEye.y.toFixed(3) + " " + (coneTarget.x + cpx).toFixed(3) + "," + (coneTarget.y + cpy).toFixed(3) + " " + (coneTarget.x - cpx).toFixed(3) + "," + (coneTarget.y - cpy).toFixed(3));
+    visionCone.setAttribute("opacity", 0.20);
+  } else {
+    visionCone.setAttribute("opacity", 0);
+  }
+  churnDots.forEach(function (dp, di) {
+    if (drivingHard) {
+      var ph = (T * 2.2 + di / churnDots.length) % 1;
+      dp.setAttribute("cx", (rx - f * (0.42 + ph * 0.5)).toFixed(3));
+      dp.setAttribute("cy", (0.03 + Math.sin(ph * Math.PI) * 0.09).toFixed(3));
+      dp.setAttribute("fill", weather === "sand" ? "#e0c896" : "#ffffff");
+      dp.setAttribute("opacity", ((1 - ph) * 0.7).toFixed(2));
+    } else dp.setAttribute("opacity", 0);
+  });
   renderDims();
 }
 
@@ -1356,7 +1433,7 @@ function idlePlan() {
 }
 function applyPlan(p, cine) {
   fieldData = p.grand ? grandData : treeData;
-  legs = p.legs; picks = p.picks; spraySegs = p.spray || [];
+  legs = p.legs; picks = p.picks; spraySegs = p.spray || []; scans = p.scans || [];
   flipList = p.flips; facingStart = p.faceStart;
   buildPlan = { T_END: p.T_END, revT0: Infinity, flipT0: p.flips.length ? p.flips[0].t0 : Infinity, dumpT0: p.dumpT0 };
   T_END = p.T_END;
@@ -1384,7 +1461,7 @@ function fruitMatches(br, crop) {
 var CROP_LABEL = { tomatoR: "tomates rouges", tomatoG: "tomates vertes", corn: "maïs", strawberry: "fraises", grape: "raisin" };
 function buildJobPlan(job) {
   fieldData = field === "grand" ? grandData : treeData;
-  var legs2 = [], picks2 = [], spray2 = [], flips = [];
+  var legs2 = [], picks2 = [], spray2 = [], flips = [], scans2 = [];
   var t = 0.8, x = ordState.pos, face = ordState.face, dumpT0 = Infinity;
   function legTo(x1, v) {
     var d = Math.abs(x1 - x);
@@ -1412,11 +1489,19 @@ function buildJobPlan(job) {
     t += 6.0;
   }
   if (job.kind === "pick") {
-    var want = job.n, got = 0;
+    /* le robot réfléchit : tous les ordres de cueillette sont fusionnés en
+       UNE seule tournée — il prend ce qui est sur son chemin, sans refaire
+       mille tours pour chaque ordre séparément */
+    var wants = {};
+    if (job.wants) { Object.keys(job.wants).forEach(function (c) { wants[c] = job.wants[c]; }); }
+    else if (job.crop) wants[job.crop] = job.n;
+    var got = {};
+    Object.keys(wants).forEach(function (c) { got[c] = 0; });
+    function cropOf(br) { return br.type === "corn" ? "corn" : br.type === "strawberry" ? "strawberry" : br.type === "grape" ? "grape" : (br.col === "R" ? "tomatoR" : "tomatoG"); }
     var perPlant = {};
     fieldData.forEach(function (td, ti) {
       td.branches.forEach(function (br) {
-        if (fruitMatches(br, job.crop) && ordState.branchState[branchKey(ti, br.idx)] === "tree") {
+        if (wants[cropOf(br)] && ordState.branchState[branchKey(ti, br.idx)] === "tree") {
           (perPlant[ti] = perPlant[ti] || []).push(br);
         }
       });
@@ -1441,26 +1526,32 @@ function buildJobPlan(job) {
       var stopX = fieldData[ti].x - (list.some(function (br) { return br.occ; }) ? 0.55 : 0.78);
       ensureFace(1);
       legTo(stopX, DRIVE_V);
-      t += 0.4; /* pause de détection : le robot « cherche » */
-      while (list.length && got < want) {
-        var nxt = list[0];
-        if (ordState.basketPlaces + placesOf(nxt) > 15) {
+      scans2.push({ tree: ti, t0: t, t1: t + 0.5 });
+      t += 0.5; /* pause de détection : les yeux scannent le plant */
+      list.forEach(function (br) {
+        if (got[cropOf(br)] >= wants[cropOf(br)]) return;
+        if (ordState.basketPlaces + placesOf(br) > 15) {
           dumpSeq();
           ensureFace(1);
           legTo(stopX, DRIVE_V);
         }
-        var br = list.shift();
         var slot = basketSlots[ordState.basket.length];
         br._slot = slot;
         ordState.branchState[branchKey(ti, br.idx)] = "basket";
         ordState.basket.push(br);
         ordState.basketPlaces += placesOf(br);
         picks2.push({ tree: ti, idx: br.idx, t0: t, t1: t + PICK_DUR, slot: slot, binSlot: binSlots[0] });
-        t += PICK_DUR; got++;
-      }
+        t += PICK_DUR; got[cropOf(br)]++;
+      });
     });
-    if (got < want) job.note = "Plus que " + got + " " + CROP_LABEL[job.crop] + " dans ce champ.";
-    if (!got) return null;
+    var notes = [];
+    Object.keys(wants).forEach(function (c) {
+      if (got[c] < wants[c]) notes.push("plus que " + got[c] + " " + CROP_LABEL[c]);
+    });
+    if (notes.length) job.note = notes.join(", ") + " dans ce champ.";
+    var totalGot = 0;
+    Object.keys(got).forEach(function (c) { totalGot += got[c]; });
+    if (!totalGot) return null;
   } else if (job.kind === "tour") {
     var farX = field === "grand" ? 28.5 : 11.2;
     ensureFace(1); legTo(farX, DRIVE_V); t += 1.5;
@@ -1482,17 +1573,27 @@ function buildJobPlan(job) {
     ensureFace(-1); legTo(-8.3, RETURN_V); ensureFace(1);
   }
   if (!legs2.length) legs2.push({ x0: x, x1: x, t0: 0, t1: Math.max(t, 0.1) });
-  return { legs: legs2, picks: picks2, spray: spray2, flips: flips, T_END: t, dumpT0: dumpT0, faceStart: ordState.face, endX: x, endFace: face, grand: field === "grand" };
+  return { legs: legs2, picks: picks2, spray: spray2, flips: flips, scans: scans2, T_END: t, dumpT0: dumpT0, faceStart: ordState.face, endX: x, endFace: face, grand: field === "grand" };
 }
 function jobLabel(job) {
-  if (job.kind === "pick") return "Cueillir " + job.n + " " + CROP_LABEL[job.crop];
+  if (job.kind === "pick") {
+    if (job.wants) {
+      var parts = [];
+      Object.keys(job.wants).forEach(function (c) { parts.push(job.wants[c] + " " + CROP_LABEL[c]); });
+      return "Cueillir " + parts.join(" + ");
+    }
+    return "Cueillir " + job.n + " " + CROP_LABEL[job.crop];
+  }
   if (job.kind === "tour") return "Faire le tour du champ";
   if (job.kind === "spray") return "Arroser les plants";
   if (job.kind === "dump") return "Vider le panier au bac";
   return "Rentrer à la maison";
 }
 function statusForNoop(job) {
-  if (job.kind === "pick") return "Plus de " + CROP_LABEL[job.crop] + " dans ce champ.";
+  if (job.kind === "pick") {
+    var crops = job.wants ? Object.keys(job.wants).map(function (c) { return CROP_LABEL[c]; }).join(", ") : CROP_LABEL[job.crop];
+    return "Plus de " + crops + " dans ce champ.";
+  }
   if (job.kind === "dump") return "Le panier est déjà vide.";
   if (job.kind === "home") return "Le robot est déjà à la maison.";
   return "Ordre terminé.";
@@ -1516,16 +1617,27 @@ document.getElementById("ordersCollapse").addEventListener("click", collapseOrde
 document.getElementById("ordersRestore").addEventListener("click", expandOrders);
 function startNextJob() {
   if (ordJob || !ordQueue.length) return;
-  var job = ordQueue[0];
+  var job;
+  if (ordQueue[0].kind === "pick") {
+    /* ultra smart : tous les ordres de cueillette qui se suivent sont fusionnés
+       en une seule tournée — le robot prend ce qui est sur son chemin */
+    var wants = {}, count = 0;
+    while (ordQueue.length && ordQueue[0].kind === "pick") {
+      var j = ordQueue.shift();
+      wants[j.crop] = (wants[j.crop] || 0) + j.n;
+      count++;
+    }
+    job = { kind: "pick", wants: wants, merged: count };
+  } else {
+    job = ordQueue.shift();
+  }
   var plan = buildJobPlan(job);
   if (!plan) {
-    ordQueue.shift();
     ordStatusEl.textContent = job.note || statusForNoop(job);
     renderQueue();
     startNextJob();
     return;
   }
-  ordQueue.shift();
   ordJob = job; ordJob.plan = plan;
   applyPlan(plan, false);
   setPlaying(true);
@@ -1555,8 +1667,14 @@ function ordPhaseText() {
   var sp = null;
   spraySegs.forEach(function (sg) { if (T >= sg.t0 && T <= sg.t1) sp = sg; });
   if (sp) return "Arrose le plant " + (sp.tree + 1) + ".";
+  var sc = null;
+  scans.forEach(function (sg) { if (T >= sg.t0 && T <= sg.t1) sc = sg; });
+  if (sc) return "Je cherche — les yeux scannent le plant " + (sc.tree + 1) + ".";
   if (isFinite(buildPlan.dumpT0) && T >= buildPlan.dumpT0) return "Vide le panier dans le grand bac.";
-  if (drivingAt(T)) return "En route — " + jobLabel(ordJob).charAt(0).toLowerCase() + jobLabel(ordJob).slice(1) + ".";
+  if (drivingAt(T)) {
+    if (hardTerrain()) return "En route — œil avant : " + terrainWord() + ", force motrice " + driveForce() + " %, ça passe.";
+    return "En route — " + jobLabel(ordJob).charAt(0).toLowerCase() + jobLabel(ordJob).slice(1) + ".";
+  }
   return jobLabel(ordJob) + "…";
 }
 function enterOrders() {
@@ -1629,23 +1747,32 @@ document.getElementById("ordClear").addEventListener("click", function () {
 /* ---------- champ, météo, séries d'ordres ---------- */
 var field = "small";
 var weather = "sun";
-function weatherFactor() { return weather === "snow" ? 0.6 : weather === "rain" ? 0.85 : 1; }
+function weatherFactor() { return weather === "snow15" ? 0.4 : weather === "snow" ? 0.6 : weather === "sand" ? 0.7 : weather === "rain" ? 0.85 : 1; }
+function hardTerrain() { return weather === "sand" || weather === "snow" || weather === "snow15"; }
+function terrainWord() { return weather === "snow15" ? "neige 10-20 cm" : weather === "snow" ? "neige 5 cm" : weather === "sand" ? "sable" : weather === "rain" ? "sol mouillé" : "terrain sec"; }
+function driveForce() { return weather === "snow15" ? 85 : weather === "snow" ? 60 : weather === "sand" ? 70 : weather === "rain" ? 45 : 30; }
 function tractionText() {
-  if (weather === "snow") return "Simulation — neige 5 cm, crampons 15 mm : ça passe, vitesse ×0,6. La neige ne bloque pas le robot.";
+  if (weather === "snow15") return "Simulation — neige 10-20 cm, crampons 15 mm : ça passe doucement, vitesse ×0,4, force motrice 85 %. La neige ne bloque pas le robot.";
+  if (weather === "snow") return "Simulation — neige 5 cm, crampons 15 mm : ça passe, vitesse ×0,6, force motrice 60 %. La neige ne bloque pas le robot.";
+  if (weather === "sand") return "Simulation — terrain sableux : vitesse ×0,7, force motrice 70 %. Le sable ne bloque pas le robot.";
   if (weather === "rain") return "Simulation — pluie, sol mouillé : vitesse ×0,85, les roues ballon tiennent. La pluie ne bloque pas le robot.";
   return "Simulation — terrain sec, vitesse normale.";
 }
 function applyWeather(w) {
   weather = w;
   document.body.classList.toggle("rain", w === "rain");
-  document.body.classList.toggle("snow", w === "snow");
+  document.body.classList.toggle("snow", w === "snow" || w === "snow15");
   rainG.setAttribute("opacity", w === "rain" ? 1 : 0);
-  snowG.setAttribute("opacity", w === "snow" ? 1 : 0);
-  snowGround.setAttribute("opacity", w === "snow" ? 0.9 : 0);
+  snowG.setAttribute("opacity", (w === "snow" || w === "snow15") ? 1 : 0);
+  snowGround.setAttribute("opacity", (w === "snow" || w === "snow15") ? 0.9 : 0);
+  snowGround.setAttribute("height", w === "snow15" ? 0.13 : 0.075);
+  sandGround.setAttribute("opacity", w === "sand" ? 0.9 : 0);
   puddles.setAttribute("opacity", w === "rain" ? 1 : 0);
   document.getElementById("wxSun").classList.toggle("active", w === "sun");
   document.getElementById("wxRain").classList.toggle("active", w === "rain");
   document.getElementById("wxSnow").classList.toggle("active", w === "snow");
+  document.getElementById("wxSnow15").classList.toggle("active", w === "snow15");
+  document.getElementById("wxSand").classList.toggle("active", w === "sand");
   document.getElementById("ordTraction").textContent = tractionText();
 }
 function refreshCropSelect() {
@@ -1680,6 +1807,8 @@ document.getElementById("fieldGrand").addEventListener("click", function () { se
 document.getElementById("wxSun").addEventListener("click", function () { applyWeather("sun"); });
 document.getElementById("wxRain").addEventListener("click", function () { applyWeather("rain"); });
 document.getElementById("wxSnow").addEventListener("click", function () { applyWeather("snow"); });
+document.getElementById("wxSnow15").addEventListener("click", function () { applyWeather("snow15"); });
+document.getElementById("wxSand").addEventListener("click", function () { applyWeather("sand"); });
 document.getElementById("btnTires").addEventListener("click", function () {
   setFreeMode(true);
   freeCam.x = robotXAt(T) + 0.1; freeCam.y = 0.18; freeCam.k = 420;
@@ -1741,7 +1870,7 @@ function frame(ts) {
 if (params.get("mode") === "orders") {
   if (params.get("field") === "grand") setField("grand");
   var wParam = params.get("weather");
-  if (wParam === "rain" || wParam === "snow") applyWeather(wParam);
+  if (wParam === "rain" || wParam === "snow" || wParam === "snow15" || wParam === "sand") applyWeather(wParam);
   enterOrders();
   params.getAll("order").forEach(function (o) {
     var parts = o.split(":");

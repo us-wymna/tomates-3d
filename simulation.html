@@ -7,6 +7,8 @@
 <style>
   html, body { margin: 0; height: 100%; overflow: hidden; font-family: system-ui, sans-serif;
     background: linear-gradient(#a8d4ee 0%, #cfe8f5 55%, #e8f2e4 100%); }
+  body.rain { background: linear-gradient(#7e97ac 0%, #a9bccd 55%, #d8ddd2 100%); }
+  body.snow { background: linear-gradient(#dfe9f2 0%, #eef3f7 55%, #f4f7f5 100%); }
   #app { position: fixed; inset: 0; }
   svg { display: block; width: 100%; height: 100%; touch-action: none; }
   #ui {
@@ -101,6 +103,8 @@
     padding: 7px 12px; font-size: 14px; cursor: pointer; min-height: 42px; color: #222;
   }
   #orders button.primary { background: #222; color: #fff; border-color: #222; }
+  #orders button.active { background: #222; color: #fff; border-color: #222; }
+  #ordTraction { font-size: 12px; color: #555; margin-top: 6px; }
   #orders input, #orders select {
     border: 1px solid #ccc; border-radius: 10px; padding: 8px; font-size: 15px;
     min-height: 42px; background: #fff; color: #222; width: 64px;
@@ -138,17 +142,31 @@
   <button id="ordersCollapse" aria-label="Réduire le panneau">⌃</button>
   <h2>Donner un ordre au robot</h2>
   <div class="orow">
+    <span>Champ :</span>
+    <button id="fieldSmall" class="active">Petit (tomates)</button>
+    <button id="fieldGrand">Grand mixte</button>
+  </div>
+  <div class="orow">
+    <span>Temps :</span>
+    <button id="wxSun" class="active">☀️ Été</button>
+    <button id="wxRain">🌧 Pluie</button>
+    <button id="wxSnow">❄️ Neige 5 cm</button>
+    <button id="btnTires" title="Zoomer sur les pneus">🔍 Pneus</button>
+  </div>
+  <div id="ordTraction">Simulation — terrain sec, vitesse normale.</div>
+  <div class="orow">
     <span>Cueillir</span>
-    <input id="ordN" type="number" min="1" max="15" value="3">
+    <input id="ordN" type="number" min="1" max="40" value="3">
     <select id="ordColor">
-      <option value="R">tomates rouges</option>
-      <option value="G">tomates vertes</option>
+      <option value="tomatoR">tomates rouges</option>
+      <option value="tomatoG">tomates vertes</option>
     </select>
     <button id="ordPick" class="primary">Ajouter</button>
+    <button id="ordSeries">▶ Série démo</button>
   </div>
   <div class="orow">
     <button id="ordTour">Faire le tour du champ</button>
-    <button id="ordSpray">Arroser les arbres</button>
+    <button id="ordSpray">Arroser les plants</button>
   </div>
   <div class="orow">
     <button id="ordDump">Vider le panier au bac</button>
@@ -271,7 +289,7 @@ for (var hi = 0; hi < 9; hi++) {
 }
 /* champ de maïs (arrière-plan, assourdi) */
 function hash(i) { var v = Math.sin(i * 127.1) * 43758.5453; return v - Math.floor(v); }
-for (var ci = 0; ci < 78; ci++) {
+for (var ci = 0; ci < 122; ci++) {
   var cx = -13.5 + ci * 0.35, ch = 0.85 + hash(ci) * 0.4;
   var cg = el("g", { transform: "translate(" + cx.toFixed(2) + ",0)" }, gFar);
   el("line", { x1: 0, y1: 0, x2: 0.03, y2: ch, stroke: "#5d7a45", "stroke-width": 0.035, "stroke-linecap": "round" }, cg);
@@ -280,11 +298,13 @@ for (var ci = 0; ci < 78; ci++) {
   el("ellipse", { cx: 0.05, cy: ch * 0.52, rx: 0.045, ry: 0.11, fill: "#d9c25a", opacity: 0.9, transform: "rotate(8 0.05 " + (ch * 0.52).toFixed(2) + ")" }, cg);
 }
 
-/* ---------- sol ---------- */
-el("rect", { x: -14, y: -8, width: 28, height: 8, fill: "#79a758" }, gGround);
-el("rect", { x: -14, y: -0.02, width: 28, height: 0.02, fill: "#6a9849" }, gGround);
+/* ---------- sol (large : le grand champ va jusqu'à x = 30) ---------- */
+el("rect", { x: -14, y: -8, width: 44, height: 8, fill: "#79a758" }, gGround);
+el("rect", { x: -14, y: -0.02, width: 44, height: 0.02, fill: "#6a9849" }, gGround);
 el("rect", { x: -9.8, y: -0.05, width: 10.8, height: 0.05, fill: "#c9a876" }, gGround);
 el("rect", { x: -9.8, y: -0.052, width: 10.8, height: 0.012, fill: "#b08f5e" }, gGround);
+/* chemin de terre sinueux du grand champ */
+el("path", { d: "M-1,0 Q4,-0.06 8,-0.02 T16,-0.05 T24,-0.02 L29,-0.04 L29,0 L-1,0 Z", fill: "#c9a876", opacity: 0.85 }, gGround);
 for (var gi = 0; gi < 26; gi++) {
   var gx = -13 + hash(gi + 40) * 26;
   if (gx > -9.8 && gx < 10.8 && hash(gi + 90) < 0.7) continue; /* pas sur le chemin */
@@ -297,7 +317,13 @@ for (var fi = 0; fi < 8; fi++) {
   el("circle", { cx: fx, cy: 0.02, r: 0.01, fill: "#e8a020" }, gGround);
 }
 
-/* ---------- maison (façade, grande ouverture, porte à 2 vantaux) ---------- */
+/* ---------- intempéries : neige au sol, flaques (visibles selon le temps choisi) ---------- */
+var snowGround = el("rect", { x: -14, y: -0.06, width: 44, height: 0.075, fill: "#ffffff", opacity: 0 }, gGround);
+var puddles = el("g", { opacity: 0 }, gGround);
+[[-4, 0.10], [6, 0.14], [15, 0.11]].forEach(function (p) {
+  el("ellipse", { cx: p[0], cy: -0.035, rx: p[1], ry: 0.016, fill: "#7fa8c9", opacity: 0.8 }, puddles);
+  el("ellipse", { cx: p[0], cy: -0.035, rx: p[1] * 0.6, ry: 0.009, fill: "#a8c8de", opacity: 0.8 }, puddles);
+});
 el("rect", { x: HOUSE.x0, y: 0, width: HOUSE.x1 - HOUSE.x0, height: HOUSE.wallH, fill: "#f6ead2", stroke: "#d9c6a3", "stroke-width": 0.02 }, gHouse);
 el("polygon", { points: (HOUSE.x0 - 0.3) + "," + HOUSE.wallH + " " + (HOUSE.x1 + 0.3) + "," + HOUSE.wallH + " -9,4.05", fill: "#b5654a", stroke: "#96503a", "stroke-width": 0.02 }, gHouse);
 el("rect", { x: -10.82, y: 2.9, width: 0.32, height: 0.85, fill: "#c98a7a", stroke: "#96503a", "stroke-width": 0.02 }, gHouse);
@@ -327,7 +353,7 @@ el("line", { x1: -8.52, y1: 2.35, x2: -8.08, y2: 2.35, stroke: "#8a7a63", "strok
 el("line", { x1: -8.3, y1: 2.13, x2: -8.3, y2: 2.57, stroke: "#8a7a63", "stroke-width": 0.02 }, gHouse);
 
 /* ---------- champ ultra pro : bandes de tonte, rangs labourés, tournesols, clôture, grange, oiseaux ---------- */
-for (var ms = 0; ms < 14; ms++) {
+for (var ms = 0; ms < 22; ms++) {
   el("rect", { x: -14 + ms * 2, y: -8, width: 2, height: 8, fill: ms % 2 ? "#ffffff" : "#1a4d00", opacity: 0.05 }, gGround);
 }
 el("rect", { x: 1.0, y: -0.14, width: 10.4, height: 0.14, fill: "#a9855c" }, gGround);
@@ -349,7 +375,7 @@ function sunflower(x, h) {
   el("circle", { cx: -0.015, cy: 0.012, r: 0.035, fill: "#7d5228" }, head);
   return g;
 }
-for (var sf = 0; sf < 26; sf++) {
+for (var sf = 0; sf < 40; sf++) {
   sunflower(-13 + sf * 1.02 + hash(sf + 200) * 0.3, 0.58 + hash(sf + 300) * 0.22);
 }
 /* clôture (segments latéraux) */
@@ -361,7 +387,7 @@ function fence(x0, x1) {
   el("rect", { x: x0, y: 0.32, width: x1 - x0, height: 0.045, fill: "#9a8a72" }, g);
   el("rect", { x: x0, y: 0.14, width: x1 - x0, height: 0.045, fill: "#9a8a72" }, g);
 }
-fence(-13.4, -11.9); fence(11.3, 13.5);
+fence(-13.4, -11.9); fence(11.3, 13.5); fence(17.5, 20.5); fence(24.5, 27.5);
 /* grange + silo à l'horizon */
 var barn = el("g", { opacity: 0.85 }, gFar);
 el("rect", { x: 12.3, y: 0, width: 0.95, height: 0.62, fill: "#a85a4a" }, barn);
@@ -378,7 +404,7 @@ for (var bd = 0; bd < 3; bd++) {
   birds.push({ g: bg, x: -6 + bd * 4.5, y: 4.9 + bd * 0.35, s: 0.8 + bd * 0.25 });
 }
 /* avant-plan : touffes basses qui cadrent le bas de l'image */
-for (var fg = 0; fg < 12; fg++) {
+for (var fg = 0; fg < 18; fg++) {
   var fx3 = -13.5 + fg * 2.4 + hash(fg + 55) * 0.8;
   var fgg = el("g", { transform: "translate(" + fx3.toFixed(2) + ",-0.52)" }, gFore);
   el("path", { d: "M0,0 Q-0.05,0.1 -0.1,0.16 M0,0 Q0,0.12 0,0.2 M0,0 Q0.05,0.1 0.1,0.16", stroke: "#4e7a2e", "stroke-width": 0.02, fill: "none", "stroke-linecap": "round" }, fgg);
@@ -466,6 +492,117 @@ TREES.forEach(function (tr, ti) {
   });
   treeData.push({ x: tr.x, g: g, branches: branches });
 });
+
+/* ---------- grand champ mixte : tomates, maïs, fraises, raisin (pas en ligne droite) ---------- */
+var gPlants = el("g", { style: "display:none" }, world);
+world.insertBefore(gPlants, gRobot);
+function cornFruit() {
+  var g = el("g", {});
+  el("ellipse", { cx: 0, cy: 0, rx: 0.028, ry: 0.075, fill: "#f2d54a", stroke: "#c9a91f", "stroke-width": 0.005 }, g);
+  el("path", { d: "M-0.028,-0.02 Q-0.055,0.03 -0.045,0.085 Q-0.02,0.05 0,0.06", fill: "#4e8a35" }, g);
+  el("path", { d: "M0.028,-0.02 Q0.055,0.03 0.045,0.085 Q0.02,0.05 0,0.06", fill: "#5d9a3e" }, g);
+  for (var kr = -2; kr <= 2; kr++) el("circle", { cx: kr * 0.011, cy: -0.02 + Math.abs(kr) * 0.012, r: 0.004, fill: "#d9b93a" }, g);
+  return g;
+}
+function strawberryFruit() {
+  var g = el("g", {});
+  el("path", { d: "M0,0.028 C-0.026,0.008 -0.026,-0.012 0,-0.028 C0.026,-0.012 0.026,0.008 0,0.028 Z", fill: "#d92b2b", stroke: "#a3150a", "stroke-width": 0.004 }, g);
+  [[-0.011, 0.002], [0.011, 0.002], [0, -0.01], [-0.006, 0.014], [0.006, 0.014]].forEach(function (p) {
+    el("circle", { cx: p[0], cy: p[1], r: 0.0035, fill: "#ffe9a8" }, g);
+  });
+  el("polygon", { points: "0,-0.028 0.014,-0.04 -0.014,-0.04", fill: "#3e7a24" }, g);
+  return g;
+}
+function grapeFruit() {
+  var g = el("g", {});
+  el("line", { x1: 0, y1: -0.075, x2: 0, y2: -0.05, stroke: "#4a7a2e", "stroke-width": 0.008 }, g);
+  var rows = [[-0.03, -0.045], [0, -0.045], [0.03, -0.045], [-0.02, -0.018], [0.02, -0.018], [-0.01, 0.009], [0.01, 0.009], [0, 0.032]];
+  rows.forEach(function (p) { el("circle", { cx: p[0], cy: p[1], r: 0.018, fill: "#6b3a8a", stroke: "#4a2560", "stroke-width": 0.003 }, g); });
+  el("circle", { cx: -0.012, cy: -0.05, r: 0.006, fill: "#8a5aa8" }, g);
+  return g;
+}
+var FRUIT_BUILD = { tomato: tomatoGroup, corn: cornFruit, strawberry: strawberryFruit, grape: grapeFruit };
+var FRUIT_COL = { tomato: null, corn: "M", strawberry: "R", grape: "P" };
+var GRAND_LAYOUT = [];
+(function () {
+  var types = ["tomato", "corn", "strawberry", "grape"];
+  for (var i = 0; i < 22; i++) {
+    var x = 0.2 + i * 1.28 + (hash(i + 500) - 0.5) * 0.7;
+    GRAND_LAYOUT.push({ x: +x.toFixed(2), type: types[i % 4], occ: (i === 3 || i === 8 || i === 14 || i === 19) });
+  }
+})();
+var grandData = [];
+GRAND_LAYOUT.forEach(function (pl, pi) {
+  var g = el("g", { transform: "translate(" + pl.x + ",0)" }, gPlants);
+  el("ellipse", { cx: 0, cy: 0.008, rx: 0.17, ry: 0.02, fill: "#000000", opacity: 0.10 }, g);
+  var fruits = [];
+  function addFruit(type, lx, ly, col) {
+    var builder = FRUIT_BUILD[type];
+    var fg = type === "tomato" ? builder(lx, ly, col) : builder();
+    if (type !== "tomato") fg.setAttribute("transform", "translate(" + lx.toFixed(3) + "," + ly.toFixed(3) + ")");
+    fg.setAttribute("data-m", type === "tomato" ? "tomato" : type);
+    fg.setAttribute("data-tx", (pl.x + lx).toFixed(3));
+    fg.setAttribute("data-ty", ly.toFixed(3));
+    g.appendChild(fg);
+    fruits.push({ x: pl.x + lx, y: ly, localX: lx, localY: ly, col: col, type: type, el: fg, tree: pi, idx: fruits.length, occ: pl.occ });
+  }
+  if (pl.type === "tomato") {
+    el("rect", { x: -0.018, y: 0, width: 0.036, height: 0.30, fill: "#8a6f4a", stroke: "#6f5839", "stroke-width": 0.008 }, g);
+    el("ellipse", { cx: 0, cy: -0.01, rx: 0.16, ry: 0.03, fill: "#a9855c" }, g);
+    [[-0.14, 0.42, "R"], [0.13, 0.36, "G"], [-0.10, 0.24, "G"], [0.11, 0.20, "R"], [0, 0.30, "G"]].forEach(function (b) {
+      el("line", { x1: 0, y1: b[1] - 0.10, x2: b[0], y2: b[1], stroke: "#4a7a2e", "stroke-width": 0.011, "stroke-linecap": "round" }, g);
+      el("ellipse", { cx: b[0] * 0.5, cy: b[1] - 0.05, rx: 0.05, ry: 0.018, fill: "#4e8a35", transform: "rotate(" + (b[0] > 0 ? -30 : 30) + " " + (b[0] * 0.5).toFixed(3) + " " + (b[1] - 0.05).toFixed(3) + ")" }, g);
+      addFruit("tomato", b[0], b[1] - 0.05, b[2]);
+    });
+  } else if (pl.type === "corn") {
+    el("line", { x1: 0, y1: 0, x2: 0.02, y2: 1.02, stroke: "#5d8a3e", "stroke-width": 0.03, "stroke-linecap": "round" }, g);
+    [[0.35, -1], [0.62, 1], [0.85, -1]].forEach(function (lf) {
+      el("path", { d: "M0," + lf[0] + " Q" + (0.22 * lf[1]) + "," + (lf[0] + 0.12) + " " + (0.30 * lf[1]) + "," + (lf[0] + 0.28), stroke: "#4e8a35", "stroke-width": 0.02, fill: "none", "stroke-linecap": "round" }, g);
+    });
+    addFruit("corn", 0.055, 0.55, "M");
+    addFruit("corn", -0.055, 0.74, "M");
+  } else if (pl.type === "strawberry") {
+    el("ellipse", { cx: 0, cy: 0.03, rx: 0.20, ry: 0.05, fill: "#6b4a2e" }, g);
+    [[-0.12, 0.10], [0.10, 0.13], [0, 0.16], [-0.05, 0.07], [0.14, 0.07]].forEach(function (lf) {
+      el("ellipse", { cx: lf[0], cy: lf[1], rx: 0.055, ry: 0.02, fill: "#4e8a35", transform: "rotate(" + (lf[0] * 120) + " " + lf[0] + " " + lf[1] + ")" }, g);
+    });
+    [[-0.13, 0.07, "R"], [0.09, 0.05, "R"], [0.02, 0.10, "R"], [-0.05, 0.13, "R"], [0.15, 0.11, "R"]].forEach(function (b) {
+      addFruit("strawberry", b[0], b[1], b[2]);
+    });
+  } else {
+    el("rect", { x: -0.30, y: 0, width: 0.035, height: 0.88, fill: "#7d6a52" }, g);
+    el("rect", { x: 0.265, y: 0, width: 0.035, height: 0.88, fill: "#7d6a52" }, g);
+    el("line", { x1: -0.30, y1: 0.85, x2: 0.30, y2: 0.85, stroke: "#3c3c3c", "stroke-width": 0.012 }, g);
+    el("path", { d: "M-0.24,0.85 Q-0.12,0.55 0,0.80 Q0.12,0.60 0.24,0.85", stroke: "#4a7a2e", "stroke-width": 0.014, fill: "none" }, g);
+    [[-0.10, 0.18], [0.14, 0.22], [0, 0.30]].forEach(function (lf) {
+      el("ellipse", { cx: lf[0], cy: lf[1], rx: 0.05, ry: 0.02, fill: "#4e8a35", transform: "rotate(-25 " + lf[0] + " " + lf[1] + ")" }, g);
+    });
+    addFruit("grape", -0.12, 0.68, "P");
+    addFruit("grape", 0.13, 0.62, "P");
+  }
+  if (pl.occ) {
+    /* touffe de feuilles devant : cache en partie les fruits (il faut s'approcher plus près) */
+    var occ = el("g", { opacity: 0.92 }, g);
+    el("ellipse", { cx: 0.05, cy: 0.35, rx: 0.20, ry: 0.16, fill: "#4e8a35" }, occ);
+    el("ellipse", { cx: -0.06, cy: 0.28, rx: 0.15, ry: 0.12, fill: "#5d9a3e" }, occ);
+    el("ellipse", { cx: 0.12, cy: 0.22, rx: 0.11, ry: 0.09, fill: "#437a2c" }, occ);
+  }
+  grandData.push({ x: pl.x, g: g, branches: fruits });
+});
+var fieldData = treeData; /* champ actif : treeData (petit) ou grandData (grand mixte) */
+
+/* ---------- précipitations (coordonnées écran, par-dessus la scène) ---------- */
+var gWx = el("g", { "pointer-events": "none" }, svg);
+var rainG = el("g", { opacity: 0 }, gWx);
+var rainLines = [];
+for (var ri = 0; ri < 42; ri++) {
+  rainLines.push(el("line", { x1: 0, y1: 0, x2: -6, y2: 26, stroke: "#7e9cb5", "stroke-width": 1.6, opacity: 0.55, "stroke-linecap": "round" }, rainG));
+}
+var snowG = el("g", { opacity: 0 }, gWx);
+var snowDots = [];
+for (var si = 0; si < 46; si++) {
+  snowDots.push(el("circle", { cx: 0, cy: 0, r: 3, fill: "#ffffff", opacity: 0.9 }, snowG));
+}
 
 /* ---------- robot (profil, inspiré de la photo) ---------- */
 function wheel(x, y, r, far) {
@@ -636,7 +773,7 @@ function buildCinePlan() {
   var dumpT0 = t; t += 6.0;
   chapters.push({ t: dumpT0, label: "Vidage au bac" });
   var T_END = t;
-  return { legs: legs, picks: picks, T_END: T_END, revT0: revT0, flipT0: flipT0, dumpT0: dumpT0, flips: [{ t0: flipT0 }], faceStart: 1, endX: -3.6, endFace: -1 };
+  return { legs: legs, picks: picks, T_END: T_END, revT0: revT0, flipT0: flipT0, dumpT0: dumpT0, flips: [{ t0: flipT0 }], faceStart: 1, endX: -3.6, endFace: -1, grand: false };
 }
 var buildPlan = null, T_END = 0;
 
@@ -648,7 +785,7 @@ for (var sr = 0; sr < 3; sr++) for (var sc = 0; sc < 5; sc++) {
 var pickedTomatoes = []; /* {branch, el, slot, binSlot} — reconstruit à chaque plan */
 function rebuildPicked() {
   pickedTomatoes = picks.map(function (pk) {
-    var br = treeData[pk.tree].branches[pk.idx];
+    var br = fieldData[pk.tree].branches[pk.idx];
     return { branch: br, el: br.el, slot: pk.slot, binSlot: pk.binSlot };
   });
 }
@@ -756,7 +893,7 @@ var distTravelled = 0, lastRX = -8.3;
 /* ---------- mode ordres : état persistant du champ et de la file ---------- */
 var mode = "cine";
 var spraySegs = []; /* {tree, t0, t1} du plan courant (vide en cinématique) */
-var ordState = { pos: -8.3, face: 1, basket: [], binCount: 0, branchState: {} };
+var ordState = { pos: -8.3, face: 1, basket: [], basketPlaces: 0, binCount: 0, branchState: {} };
 var ordQueue = []; /* ordres en attente : {kind, ...} */
 var ordJob = null; /* ordre en cours d'exécution */
 
@@ -773,6 +910,22 @@ function updateScene(T) {
   birds.forEach(function (b) {
     b.g.setAttribute("transform", "translate(" + (b.x + (T * 0.05) % 30 - 8) + "," + b.y + ") scale(" + b.s + ")");
   });
+  /* pluie / neige (coordonnées écran) */
+  if (weather === "rain") {
+    rainLines.forEach(function (ln, i) {
+      var rx2 = (hash(i + 11) * (viewW + 40)) % (viewW + 40) - 20;
+      var ry = (hash(i + 77) * (viewH + 40) + T * 420) % (viewH + 40) - 20;
+      ln.setAttribute("x1", rx2.toFixed(1)); ln.setAttribute("y1", ry.toFixed(1));
+      ln.setAttribute("x2", (rx2 - 6).toFixed(1)); ln.setAttribute("y2", (ry + 26).toFixed(1));
+    });
+  }
+  if (weather === "snow") {
+    snowDots.forEach(function (dt, i) {
+      var sx = (hash(i + 31) * (viewW + 40) + Math.sin(T * 0.7 + i) * 18) % (viewW + 40) - 20;
+      var sy = (hash(i + 53) * (viewH + 40) + T * 26) % (viewH + 40) - 20;
+      dt.setAttribute("cx", sx.toFixed(1)); dt.setAttribute("cy", sy.toFixed(1));
+    });
+  }
   var smPh = (T * 0.06) % 1;
   smoke1.setAttribute("cy", 3.85 + smPh * 0.5);
   smoke1.setAttribute("opacity", 0.55 * (1 - smPh));
@@ -810,7 +963,7 @@ function updateScene(T) {
   if (cur) {
     var pk = cur.pk;
     var ph = (T - pk.t0) / PICK_DUR;
-    var br = treeData[pk.tree].branches[pk.idx];
+    var br = fieldData[pk.tree].branches[pk.idx];
     var target = { x: br.x, y: br.y };
     var sol = solveArm(target.x, target.y, shoulderWorld.x, shoulderWorld.y);
     if (ph < 0.28) {
@@ -852,7 +1005,7 @@ function updateScene(T) {
       place(gFx, lerp(lerp(from.x, mid.x, u), lerp(mid.x, to.x, u), u), lerp(lerp(from.y, mid.y, u), lerp(mid.y, to.y, u), u));
       return;
     }
-    if (T < pk.t0) { place(treeData[br.tree].g, br.localX, br.localY); return; }
+    if (T < pk.t0) { place(fieldData[br.tree].g, br.localX, br.localY); return; }
     if (T >= pk.t1) { place(basketTomatoes, pt.slot.x, pt.slot.y); return; }
     var ph = (T - pk.t0) / PICK_DUR;
     var target = { x: br.x, y: br.y };
@@ -870,7 +1023,7 @@ function updateScene(T) {
   var sprayActive = null;
   spraySegs.forEach(function (sg) { if (T >= sg.t0 && T <= sg.t1) sprayActive = sg; });
   if (sprayActive) {
-    var treeX = TREES[sprayActive.tree].x;
+    var treeX = fieldData[sprayActive.tree].x;
     var shS = { x: rx + f * SHOULDER.x, y: SHOULDER.y + bob };
     var solS = solveArm(treeX - 0.12, 0.72, shS.x, shS.y);
     armPose = solS; grip = 0; suction = 0;
@@ -918,7 +1071,7 @@ function buildShots(cine) {
       (function (t0, t1) {
         var sg = null;
         spraySegs.forEach(function (g) { if (t0 >= g.t0 && t0 < g.t1) sg = g; });
-        ss.push({ t0: t0, t1: t1, get: sg ? function () { return { x: TREES[sg.tree].x - 0.42, y: 0.38, k: 230 }; } : followCam });
+        ss.push({ t0: t0, t1: t1, get: sg ? function () { return { x: fieldData[sg.tree].x - 0.42, y: 0.38, k: 230 }; } : followCam });
       })(bounds[bi], bounds[bi + 1]);
     }
     tCue = spraySegs[0].t0; tEndPicks = 0;
@@ -930,7 +1083,7 @@ function buildShots(cine) {
   function pickCloseup(T) {
     var cur = null;
     picks.forEach(function (pk) { if (T >= pk.t0 && T <= pk.t1) cur = pk; });
-    if (cur) return { x: TREES[cur.tree].x - 0.42, y: 0.38, k: 230 };
+    if (cur) return { x: fieldData[cur.tree].x - 0.42, y: 0.38, k: 230 };
     return followCam(T);
   }
   var s = [];
@@ -978,7 +1131,7 @@ function applyCamera(T, dt) {
       var target = robotXAt(T) + 0.5;
       freeCam.x += (target - freeCam.x) * Math.min(1, (dt || 0.016) * 2.2);
     }
-    freeCam.x = clamp(freeCam.x, -13, 13);
+    freeCam.x = clamp(freeCam.x, -13, (mode === "orders" && field === "grand") ? 27 : 13);
     freeCam.y = clamp(freeCam.y, -2, 4.5);
     cam.x = freeCam.x; cam.y = freeCam.y; cam.k = freeCam.k;
   }
@@ -1010,6 +1163,9 @@ function lineDims(x1, y1, x2, y2, label, lx, ly) {
 }
 var MEASURES = {
   tomato: { title: "Tomate", tag: "Mesures réelles — dessin agrandi pour la lisibilité", list: ["Diamètre : 33 mm", "Paroi : 3,2 mm", "10 logements d'aimants Ø 6,35 mm", "Tige à baïonnette : pousser + quart de tour"], dims: function (d) { return lineDims(d.tx - 0.07, d.ty, d.tx + 0.07, d.ty, "Ø 33 mm réels", d.tx, d.ty + 0.14); } },
+  corn: { title: "Maïs", tag: "Mesures réelles — dessin agrandi pour la lisibilité", list: ["Épi : ~200 mm de long", "Plant : ~1,80 m de haut", "2 épis par plant", "Le robot prend l'épi entier"], dims: function (d) { return lineDims(d.tx - 0.05, d.ty - 0.08, d.tx + 0.05, d.ty + 0.08, "Épi ~200 mm", d.tx, d.ty + 0.16); } },
+  strawberry: { title: "Fraise", tag: "Mesures réelles — dessin agrandi pour la lisibilité", list: ["Fraise : ~30 mm", "Plant bas : ~30 cm", "5 fraises par plant", "Cueillie délicatement, sans écraser"], dims: function (d) { return lineDims(d.tx - 0.04, d.ty, d.tx + 0.04, d.ty, "Ø ~30 mm", d.tx, d.ty + 0.10); } },
+  grape: { title: "Raisin", tag: "Mesures réelles — dessin agrandi pour la lisibilité", list: ["Grappe : ~150 mm", "Vigne sur treillis : ~90 cm", "2 grappes par vigne", "Coupée à la tige, pas arrachée"], dims: function (d) { return lineDims(d.tx - 0.05, d.ty - 0.07, d.tx + 0.05, d.ty + 0.07, "Grappe ~150 mm", d.tx, d.ty + 0.15); } },
   tree: { title: "Arbre à tomates", tag: "Mesures réelles — arbre dessiné ×1,8", list: ["Hauteur réelle : 386 mm", "Base : Ø 140 mm", "3 tronçons de 130 mm", "6 branches, 2 aimants chacune", "Les tomates se détachent par aimants"], dims: function (d) { var x = d.tx; return lineDims(x + 0.28, 0, x + 0.28, 0.70, "386 mm réels", x + 0.28, 0.80); } },
   arm: { title: "Bras du robot", tag: "Estimations d'après la photo — à confirmer", list: ["Segment 1 : 350 mm", "Segment 2 : 320 mm", "Portée max : ~670 mm", "Pince + ventouse : détache et aspire"], dims: function () {
       var sh = { x: lastRx + lastF * SHOULDER.x, y: SHOULDER.y };
@@ -1175,23 +1331,27 @@ var ordStatusEl = document.getElementById("ordStatus");
 var ordQueueEl = document.getElementById("ordQueue");
 var ordBasketEl = document.getElementById("ordBasket");
 var btnMode = document.getElementById("btnMode");
-function branchKey(ti, bi) { return ti + "-" + bi; }
+function branchKey(ti, bi) { return (fieldData === grandData ? "G" : "S") + ti + "-" + bi; }
 function resetField() {
-  treeData.forEach(function (td) {
-    td.branches.forEach(function (br) {
-      ordState.branchState[branchKey(br.tree, br.idx)] = "tree";
-      if (br.el.parentNode !== td.g) td.g.appendChild(br.el);
-      br.el.setAttribute("transform", "translate(" + br.localX.toFixed(3) + "," + br.localY.toFixed(3) + ")");
+  [["S", treeData], ["G", grandData]].forEach(function (pair) {
+    pair[1].forEach(function (td) {
+      td.branches.forEach(function (br) {
+        ordState.branchState[pair[0] + br.tree + "-" + br.idx] = "tree";
+        if (br.el.parentNode !== td.g) td.g.appendChild(br.el);
+        br.el.setAttribute("transform", "translate(" + br.localX.toFixed(3) + "," + br.localY.toFixed(3) + ")");
+      });
     });
   });
   ordState.basket = [];
+  ordState.basketPlaces = 0;
   ordState.binCount = 0;
   spraySegs = [];
 }
 function idlePlan() {
-  return { legs: [{ x0: ordState.pos, x1: ordState.pos, t0: 0, t1: 0.1 }], picks: [], spray: [], flips: [], T_END: 0.1, dumpT0: Infinity, faceStart: ordState.face, endX: ordState.pos, endFace: ordState.face };
+  return { legs: [{ x0: ordState.pos, x1: ordState.pos, t0: 0, t1: 0.1 }], picks: [], spray: [], flips: [], T_END: 0.1, dumpT0: Infinity, faceStart: ordState.face, endX: ordState.pos, endFace: ordState.face, grand: field === "grand" };
 }
 function applyPlan(p, cine) {
+  fieldData = p.grand ? grandData : treeData;
   legs = p.legs; picks = p.picks; spraySegs = p.spray || [];
   flipList = p.flips; facingStart = p.faceStart;
   buildPlan = { T_END: p.T_END, revT0: Infinity, flipT0: p.flips.length ? p.flips[0].t0 : Infinity, dumpT0: p.dumpT0 };
@@ -1202,18 +1362,30 @@ function applyPlan(p, cine) {
   lastRX = p.legs[0].x0; lastRx = p.legs[0].x0;
 }
 function routeOrder(treesNeeded, x) {
-  var asc = treesNeeded.slice().sort(function (a, b) { return stops[a] - stops[b]; });
-  if (x <= stops[asc[0]]) return asc;
-  if (x >= stops[asc[asc.length - 1]]) return asc.reverse();
-  return (Math.abs(x - stops[asc[0]]) <= Math.abs(x - stops[asc[asc.length - 1]])) ? asc : asc.reverse();
+  function px(i) { return fieldData[i].x - 0.78; }
+  var asc = treesNeeded.slice().sort(function (a, b) { return px(a) - px(b); });
+  if (x <= px(asc[0])) return asc;
+  if (x >= px(asc[asc.length - 1])) return asc.reverse();
+  return (Math.abs(x - px(asc[0])) <= Math.abs(x - px(asc[asc.length - 1]))) ? asc : asc.reverse();
 }
+function placesOf(br) { if (br.type === "corn") return 3; if (br.type === "grape") return 2; return 1; }
+function fruitMatches(br, crop) {
+  if (crop === "tomatoR") return (br.type === "tomato" || !br.type) && br.col === "R";
+  if (crop === "tomatoG") return (br.type === "tomato" || !br.type) && br.col === "G";
+  if (crop === "corn") return br.type === "corn";
+  if (crop === "strawberry") return br.type === "strawberry";
+  if (crop === "grape") return br.type === "grape";
+  return false;
+}
+var CROP_LABEL = { tomatoR: "tomates rouges", tomatoG: "tomates vertes", corn: "maïs", strawberry: "fraises", grape: "raisin" };
 function buildJobPlan(job) {
+  fieldData = field === "grand" ? grandData : treeData;
   var legs2 = [], picks2 = [], spray2 = [], flips = [];
   var t = 0.8, x = ordState.pos, face = ordState.face, dumpT0 = Infinity;
   function legTo(x1, v) {
     var d = Math.abs(x1 - x);
     if (d < 0.01) return;
-    var dur = d / v;
+    var dur = d / (v * weatherFactor());
     legs2.push({ x0: x, x1: x1, t0: t, t1: t + dur });
     t += dur; x = x1;
   }
@@ -1232,47 +1404,69 @@ function buildJobPlan(job) {
     });
     ordState.binCount += load.length;
     ordState.basket = [];
+    ordState.basketPlaces = 0;
     t += 6.0;
   }
   if (job.kind === "pick") {
     var want = job.n, got = 0;
-    var avail = [];
-    treeData.forEach(function (td, ti) {
+    var perPlant = {};
+    fieldData.forEach(function (td, ti) {
       td.branches.forEach(function (br) {
-        if (br.col === job.color && ordState.branchState[branchKey(ti, br.idx)] === "tree") avail.push(br);
+        if (fruitMatches(br, job.crop) && ordState.branchState[branchKey(ti, br.idx)] === "tree") {
+          (perPlant[ti] = perPlant[ti] || []).push(br);
+        }
       });
     });
-    var perTree = {};
-    avail.forEach(function (br) { (perTree[br.tree] = perTree[br.tree] || []).push(br); });
-    var treesNeeded = Object.keys(perTree).map(function (k) { return parseInt(k, 10); });
-    routeOrder(treesNeeded, x).forEach(function (ti) {
-      var list = perTree[ti] || [];
+    var targetPlants = Object.keys(perPlant).map(function (k) { return parseInt(k, 10); });
+    if (!targetPlants.length) return null;
+    /* ordre de visite : le robot balaye le champ et « cherche » (pause devant chaque plant) */
+    var visitOrder = [];
+    var curX = x;
+    routeOrder(targetPlants, x).forEach(function (ti) {
+      var tx = fieldData[ti].x;
+      var seg = [];
+      fieldData.forEach(function (td, pj) {
+        if ((tx >= curX && td.x > curX && td.x <= tx) || (tx < curX && td.x < curX && td.x >= tx)) seg.push(pj);
+      });
+      seg.sort(function (a, b) { return (tx >= curX ? 1 : -1) * (fieldData[a].x - fieldData[b].x); });
+      seg.forEach(function (pj) { if (visitOrder.indexOf(pj) < 0) visitOrder.push(pj); });
+      curX = tx;
+    });
+    visitOrder.forEach(function (ti) {
+      var list = perPlant[ti] || [];
+      var stopX = fieldData[ti].x - (list.some(function (br) { return br.occ; }) ? 0.55 : 0.78);
+      ensureFace(1);
+      legTo(stopX, DRIVE_V);
+      t += 0.4; /* pause de détection : le robot « cherche » */
       while (list.length && got < want) {
-        if (ordState.basket.length >= 15) dumpSeq();
-        ensureFace(1);
-        legTo(stops[ti], DRIVE_V);
-        var room = 15 - ordState.basket.length;
-        var take = list.splice(0, Math.min(room, want - got));
-        take.forEach(function (br) {
-          var slot = basketSlots[ordState.basket.length];
-          br._slot = slot;
-          ordState.branchState[branchKey(ti, br.idx)] = "basket";
-          ordState.basket.push(br);
-          picks2.push({ tree: ti, idx: br.idx, t0: t, t1: t + PICK_DUR, slot: slot, binSlot: binSlots[0] });
-          t += PICK_DUR; got++;
-        });
+        var nxt = list[0];
+        if (ordState.basketPlaces + placesOf(nxt) > 15) {
+          dumpSeq();
+          ensureFace(1);
+          legTo(stopX, DRIVE_V);
+        }
+        var br = list.shift();
+        var slot = basketSlots[ordState.basket.length];
+        br._slot = slot;
+        ordState.branchState[branchKey(ti, br.idx)] = "basket";
+        ordState.basket.push(br);
+        ordState.basketPlaces += placesOf(br);
+        picks2.push({ tree: ti, idx: br.idx, t0: t, t1: t + PICK_DUR, slot: slot, binSlot: binSlots[0] });
+        t += PICK_DUR; got++;
       }
     });
-    if (got < want) job.note = "Plus que " + got + " tomate(s) " + (job.color === "R" ? "rouge(s)" : "verte(s)") + " sur le champ.";
+    if (got < want) job.note = "Plus que " + got + " " + CROP_LABEL[job.crop] + " dans ce champ.";
     if (!got) return null;
   } else if (job.kind === "tour") {
-    ensureFace(1); legTo(11.2, DRIVE_V); t += 1.5;
+    var farX = field === "grand" ? 28.5 : 11.2;
+    ensureFace(1); legTo(farX, DRIVE_V); t += 1.5;
     ensureFace(-1); legTo(-8.3, RETURN_V);
     ensureFace(1); t += 0.5;
   } else if (job.kind === "spray") {
-    routeOrder([0, 1, 2, 3, 4], x).forEach(function (ti) {
+    var allPlants = fieldData.map(function (td, ti) { return ti; });
+    routeOrder(allPlants, x).forEach(function (ti) {
       ensureFace(1);
-      legTo(stops[ti], DRIVE_V);
+      legTo(fieldData[ti].x - 0.78, DRIVE_V);
       spray2.push({ tree: ti, t0: t, t1: t + 2.6 });
       t += 2.6;
     });
@@ -1284,17 +1478,17 @@ function buildJobPlan(job) {
     ensureFace(-1); legTo(-8.3, RETURN_V); ensureFace(1);
   }
   if (!legs2.length) legs2.push({ x0: x, x1: x, t0: 0, t1: Math.max(t, 0.1) });
-  return { legs: legs2, picks: picks2, spray: spray2, flips: flips, T_END: t, dumpT0: dumpT0, faceStart: ordState.face, endX: x, endFace: face };
+  return { legs: legs2, picks: picks2, spray: spray2, flips: flips, T_END: t, dumpT0: dumpT0, faceStart: ordState.face, endX: x, endFace: face, grand: field === "grand" };
 }
 function jobLabel(job) {
-  if (job.kind === "pick") return "Cueillir " + job.n + " " + (job.color === "R" ? "rouges" : "vertes");
+  if (job.kind === "pick") return "Cueillir " + job.n + " " + CROP_LABEL[job.crop];
   if (job.kind === "tour") return "Faire le tour du champ";
-  if (job.kind === "spray") return "Arroser les arbres";
+  if (job.kind === "spray") return "Arroser les plants";
   if (job.kind === "dump") return "Vider le panier au bac";
   return "Rentrer à la maison";
 }
 function statusForNoop(job) {
-  if (job.kind === "pick") return "Plus de tomates " + (job.color === "R" ? "rouges" : "vertes") + " sur le champ.";
+  if (job.kind === "pick") return "Plus de " + CROP_LABEL[job.crop] + " dans ce champ.";
   if (job.kind === "dump") return "Le panier est déjà vide.";
   if (job.kind === "home") return "Le robot est déjà à la maison.";
   return "Ordre terminé.";
@@ -1304,7 +1498,7 @@ function renderQueue() {
   if (ordJob) parts.push("▶ " + jobLabel(ordJob));
   ordQueue.forEach(function (job, i) { parts.push((i + 1) + ". " + jobLabel(job)); });
   ordQueueEl.textContent = parts.length ? "File : " + parts.join(" · ") : "File vide.";
-  ordBasketEl.textContent = "Panier : " + ordState.basket.length + " / 15";
+  ordBasketEl.textContent = "Panier : " + ordState.basket.length + " fruit(s) · " + ordState.basketPlaces + " / 15 places";
   var n = ordQueue.length + (ordJob ? 1 : 0);
   document.getElementById("ordersRestore").textContent = n ? "📋 Ordres · " + n + " en cours" : "📋 Ordres";
 }
@@ -1348,12 +1542,13 @@ function ordPhaseText() {
   var cur = null;
   picks.forEach(function (pk) { if (T >= pk.t0 && T <= pk.t1) cur = pk; });
   if (cur) {
-    var br = treeData[cur.tree].branches[cur.idx];
-    return "Cueille 1 tomate " + (br.col === "R" ? "rouge" : "verte") + " — arbre " + (cur.tree + 1) + ".";
+    var br = fieldData[cur.tree].branches[cur.idx];
+    var what = br.type === "corn" ? "1 épi de maïs" : br.type === "strawberry" ? "1 fraise" : br.type === "grape" ? "1 grappe de raisin" : "1 tomate " + (br.col === "R" ? "rouge" : "verte");
+    return "Cueille " + what + " — plant " + (cur.tree + 1) + ".";
   }
   var sp = null;
   spraySegs.forEach(function (sg) { if (T >= sg.t0 && T <= sg.t1) sp = sg; });
-  if (sp) return "Arrose l'arbre " + (sp.tree + 1) + ".";
+  if (sp) return "Arrose le plant " + (sp.tree + 1) + ".";
   if (isFinite(buildPlan.dumpT0) && T >= buildPlan.dumpT0) return "Vide le panier dans le grand bac.";
   if (drivingAt(T)) return "En route — " + jobLabel(ordJob).charAt(0).toLowerCase() + jobLabel(ordJob).slice(1) + ".";
   return jobLabel(ordJob) + "…";
@@ -1373,6 +1568,7 @@ function enterOrders() {
   expandOrders();
   ordStatusEl.textContent = "En attente d'un ordre.";
   renderQueue();
+  showFieldPlants();
 }
 function enterCine() {
   mode = "cine";
@@ -1382,13 +1578,19 @@ function enterCine() {
   hudEl.classList.remove("orders");
   ui.classList.remove("orders");
   btnMode.textContent = "📋 Donner des ordres";
+  gPlants.style.display = "none";
+  gTrees.style.display = "";
   applyPlan(buildCinePlan(), true);
   T = 0; setPlaying(true);
 }
+function showFieldPlants() {
+  gPlants.style.display = field === "grand" ? "" : "none";
+  gTrees.style.display = field === "grand" ? "none" : "";
+}
 btnMode.addEventListener("click", function () { if (mode === "cine") enterOrders(); else enterCine(); });
 document.getElementById("ordPick").addEventListener("click", function () {
-  var n = clamp(parseInt(document.getElementById("ordN").value, 10) || 1, 1, 15);
-  ordQueue.push({ kind: "pick", color: document.getElementById("ordColor").value, n: n });
+  var n = clamp(parseInt(document.getElementById("ordN").value, 10) || 1, 1, 40);
+  ordQueue.push({ kind: "pick", crop: document.getElementById("ordColor").value, n: n });
   renderQueue(); startNextJob();
 });
 document.getElementById("ordTour").addEventListener("click", function () { ordQueue.push({ kind: "tour" }); renderQueue(); startNextJob(); });
@@ -1399,6 +1601,74 @@ document.getElementById("ordClear").addEventListener("click", function () {
   ordQueue.length = 0;
   renderQueue();
   ordStatusEl.textContent = ordJob ? "File annulée — le robot finit son ordre en cours." : "File annulée.";
+});
+
+/* ---------- champ, météo, séries d'ordres ---------- */
+var field = "small";
+var weather = "sun";
+function weatherFactor() { return weather === "snow" ? 0.6 : weather === "rain" ? 0.85 : 1; }
+function tractionText() {
+  if (weather === "snow") return "Simulation — neige 5 cm, crampons 15 mm : ça passe, vitesse ×0,6. La neige ne bloque pas le robot.";
+  if (weather === "rain") return "Simulation — pluie, sol mouillé : vitesse ×0,85, les roues ballon tiennent. La pluie ne bloque pas le robot.";
+  return "Simulation — terrain sec, vitesse normale.";
+}
+function applyWeather(w) {
+  weather = w;
+  document.body.classList.toggle("rain", w === "rain");
+  document.body.classList.toggle("snow", w === "snow");
+  rainG.setAttribute("opacity", w === "rain" ? 1 : 0);
+  snowG.setAttribute("opacity", w === "snow" ? 1 : 0);
+  snowGround.setAttribute("opacity", w === "snow" ? 0.9 : 0);
+  puddles.setAttribute("opacity", w === "rain" ? 1 : 0);
+  document.getElementById("wxSun").classList.toggle("active", w === "sun");
+  document.getElementById("wxRain").classList.toggle("active", w === "rain");
+  document.getElementById("wxSnow").classList.toggle("active", w === "snow");
+  document.getElementById("ordTraction").textContent = tractionText();
+}
+function refreshCropSelect() {
+  var sel = document.getElementById("ordColor");
+  var opts = field === "grand"
+    ? [["tomatoR", "tomates rouges"], ["tomatoG", "tomates vertes"], ["corn", "maïs"], ["strawberry", "fraises"], ["grape", "raisin"]]
+    : [["tomatoR", "tomates rouges"], ["tomatoG", "tomates vertes"]];
+  sel.innerHTML = "";
+  opts.forEach(function (o) {
+    var op = document.createElement("option");
+    op.value = o[0]; op.textContent = o[1];
+    sel.appendChild(op);
+  });
+}
+function setField(f) {
+  if (field === f) return;
+  field = f;
+  ordQueue.length = 0; ordJob = null;
+  resetField();
+  ordState.pos = -8.3; ordState.face = 1;
+  document.getElementById("fieldSmall").classList.toggle("active", f === "small");
+  document.getElementById("fieldGrand").classList.toggle("active", f === "grand");
+  refreshCropSelect();
+  showFieldPlants();
+  applyPlan(idlePlan(), false);
+  setPlaying(false);
+  renderQueue();
+  ordStatusEl.textContent = f === "grand" ? "Grand champ mixte : tomates, maïs, fraises, raisin — le robot cherche chaque récolte parmi les plants." : "Petit champ : 5 arbres à tomates.";
+}
+document.getElementById("fieldSmall").addEventListener("click", function () { setField("small"); });
+document.getElementById("fieldGrand").addEventListener("click", function () { setField("grand"); });
+document.getElementById("wxSun").addEventListener("click", function () { applyWeather("sun"); });
+document.getElementById("wxRain").addEventListener("click", function () { applyWeather("rain"); });
+document.getElementById("wxSnow").addEventListener("click", function () { applyWeather("snow"); });
+document.getElementById("btnTires").addEventListener("click", function () {
+  setFreeMode(true);
+  freeCam.x = robotXAt(T) + 0.1; freeCam.y = 0.18; freeCam.k = 420;
+  ordStatusEl.textContent = "Pneus ballon — crampons 15 mm" + (weather === "snow" ? ", dans 5 cm de neige." : ".");
+});
+document.getElementById("ordSeries").addEventListener("click", function () {
+  if (field === "grand") {
+    ordQueue.push({ kind: "pick", crop: "tomatoR", n: 8 }, { kind: "pick", crop: "corn", n: 6 }, { kind: "pick", crop: "strawberry", n: 5 });
+  } else {
+    ordQueue.push({ kind: "pick", crop: "tomatoR", n: 5 }, { kind: "pick", crop: "tomatoG", n: 3 });
+  }
+  renderQueue(); startNextJob();
 });
 
 /* ---------- boucle ---------- */
@@ -1427,9 +1697,9 @@ function frame(ts) {
     if (ordJob) {
       var s = ordPhaseText();
       ordStatusEl.textContent = s;
-      counterEl.textContent = s + " — Panier : " + ordState.basket.length + " / 15";
+      counterEl.textContent = s + " — Panier : " + ordState.basketPlaces + " / 15 places";
     } else {
-      counterEl.textContent = "Mode ordres — " + ordState.basket.length + " tomate(s) au panier.";
+      counterEl.textContent = "Mode ordres — " + ordState.basket.length + " fruit(s) au panier (" + ordState.basketPlaces + " / 15 places).";
     }
     clockEl.textContent = fmtT(T);
   } else {
@@ -1445,12 +1715,19 @@ function frame(ts) {
   requestAnimationFrame(frame);
 }
 if (params.get("mode") === "orders") {
+  if (params.get("field") === "grand") setField("grand");
+  var wParam = params.get("weather");
+  if (wParam === "rain" || wParam === "snow") applyWeather(wParam);
   enterOrders();
   params.getAll("order").forEach(function (o) {
     var parts = o.split(":");
     if (parts[0] === "pick") {
-      var col = (parts[1] || "red").charAt(0).toLowerCase() === "r" ? "R" : "G";
-      ordQueue.push({ kind: "pick", color: col, n: clamp(parseInt(parts[2], 10) || 3, 1, 15) });
+      var key = (parts[1] || "red").toLowerCase();
+      var crop = key.indexOf("green") === 0 || key === "g" || key.indexOf("vert") === 0 ? "tomatoG"
+        : key === "corn" || key === "mais" || key === "maïs" ? "corn"
+        : key === "strawberry" || key === "fraise" ? "strawberry"
+        : key === "grape" || key === "raisin" ? "grape" : "tomatoR";
+      ordQueue.push({ kind: "pick", crop: crop, n: clamp(parseInt(parts[2], 10) || 3, 1, 40) });
     } else if (parts[0] === "tour") ordQueue.push({ kind: "tour" });
     else if (parts[0] === "spray" || parts[0] === "arroser") ordQueue.push({ kind: "spray" });
     else if (parts[0] === "dump" || parts[0] === "vider") ordQueue.push({ kind: "dump" });

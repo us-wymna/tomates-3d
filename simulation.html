@@ -175,7 +175,7 @@
     <button id="ordClear">Annuler la file</button>
   </div>
   <div class="orow">
-    <button id="ordRun" class="primary run">▶ Exécuter</button>
+    <button id="ordRun" class="primary run">▶ Vas-y</button>
   </div>
   <div id="ordBasket">Panier : 0 / 15</div>
   <div id="ordQueue">File vide.</div>
@@ -1506,7 +1506,7 @@ function renderQueue() {
   var n = ordQueue.length + (ordJob ? 1 : 0);
   document.getElementById("ordersRestore").textContent = n ? "📋 Ordres · " + n + " en cours" : "📋 Ordres";
   var runBtn = document.getElementById("ordRun");
-  if (runBtn) runBtn.textContent = ordJob ? "▶ En cours…" : (ordQueue.length ? "▶ Exécuter (" + ordQueue.length + " ordre" + (ordQueue.length > 1 ? "s" : "") + ")" : "▶ Exécuter");
+  if (runBtn) runBtn.textContent = ordJob ? "▶ En cours…" : (ordQueue.length ? "▶ Vas-y (" + ordQueue.length + " ordre" + (ordQueue.length > 1 ? "s" : "") + ")" : "▶ Vas-y");
 }
 /* le panneau se replie pendant que le robot travaille (vue dégagée),
    et se rouvre quand il a fini */
@@ -1598,15 +1598,26 @@ document.getElementById("ordPick").addEventListener("click", function () {
   var n = clamp(parseInt(document.getElementById("ordN").value, 10) || 1, 1, 40);
   ordQueue.push({ kind: "pick", crop: document.getElementById("ordColor").value, n: n });
   renderQueue();
-  if (!ordJob) ordStatusEl.textContent = "Ordre ajouté à la file — clique sur « Exécuter » pour lancer.";
+  if (!ordJob) ordStatusEl.textContent = "Ordre ajouté à la file — clique sur « Vas-y » pour lancer.";
 });
-document.getElementById("ordTour").addEventListener("click", function () { ordQueue.push({ kind: "tour" }); renderQueue(); if (!ordJob) ordStatusEl.textContent = "Ordre ajouté à la file — clique sur « Exécuter » pour lancer."; });
-document.getElementById("ordSpray").addEventListener("click", function () { ordQueue.push({ kind: "spray" }); renderQueue(); if (!ordJob) ordStatusEl.textContent = "Ordre ajouté à la file — clique sur « Exécuter » pour lancer."; });
-document.getElementById("ordDump").addEventListener("click", function () { ordQueue.push({ kind: "dump" }); renderQueue(); if (!ordJob) ordStatusEl.textContent = "Ordre ajouté à la file — clique sur « Exécuter » pour lancer."; });
-document.getElementById("ordHome").addEventListener("click", function () { ordQueue.push({ kind: "home" }); renderQueue(); if (!ordJob) ordStatusEl.textContent = "Ordre ajouté à la file — clique sur « Exécuter » pour lancer."; });
+document.getElementById("ordTour").addEventListener("click", function () { ordQueue.push({ kind: "tour" }); renderQueue(); if (!ordJob) ordStatusEl.textContent = "Ordre ajouté à la file — clique sur « Vas-y » pour lancer."; });
+document.getElementById("ordSpray").addEventListener("click", function () { ordQueue.push({ kind: "spray" }); renderQueue(); if (!ordJob) ordStatusEl.textContent = "Ordre ajouté à la file — clique sur « Vas-y » pour lancer."; });
+document.getElementById("ordDump").addEventListener("click", function () { ordQueue.push({ kind: "dump" }); renderQueue(); if (!ordJob) ordStatusEl.textContent = "Ordre ajouté à la file — clique sur « Vas-y » pour lancer."; });
+document.getElementById("ordHome").addEventListener("click", function () { ordQueue.push({ kind: "home" }); renderQueue(); if (!ordJob) ordStatusEl.textContent = "Ordre ajouté à la file — clique sur « Vas-y » pour lancer."; });
+function defaultSeries() {
+  /* récolte par défaut quand on clique sur « Vas-y » sans aucun ordre choisi */
+  if (field === "grand") {
+    return [{ kind: "pick", crop: "tomatoR", n: 6 }, { kind: "pick", crop: "corn", n: 4 }, { kind: "pick", crop: "strawberry", n: 4 }];
+  }
+  return [{ kind: "pick", crop: "tomatoR", n: 5 }, { kind: "pick", crop: "tomatoG", n: 8 }];
+}
 document.getElementById("ordRun").addEventListener("click", function () {
   if (ordJob) { setPlaying(true); return; }
-  if (!ordQueue.length) { ordStatusEl.textContent = "File vide — ajoute d'abord un ordre, puis clique sur « Exécuter »."; return; }
+  if (!ordQueue.length) {
+    defaultSeries().forEach(function (job) { ordQueue.push(job); });
+    ordStatusEl.textContent = "Aucun ordre choisi — récolte par défaut.";
+    renderQueue();
+  }
   startNextJob();
 });
 document.getElementById("ordClear").addEventListener("click", function () {
@@ -1681,7 +1692,7 @@ document.getElementById("ordSeries").addEventListener("click", function () {
     ordQueue.push({ kind: "pick", crop: "tomatoR", n: 5 }, { kind: "pick", crop: "tomatoG", n: 3 });
   }
   renderQueue();
-  if (!ordJob) ordStatusEl.textContent = "Série ajoutée à la file — clique sur « Exécuter » pour lancer.";
+  if (!ordJob) ordStatusEl.textContent = "Série ajoutée à la file — clique sur « Vas-y » pour lancer.";
 });
 
 /* ---------- boucle ---------- */

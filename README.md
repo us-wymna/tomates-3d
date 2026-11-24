@@ -4,6 +4,8 @@ Tomate creuse en 2 modules (corps + tige) qui s'assemblent par baïonnette, et a
 
 Ouvre `index.html` (ou le site déployé) pour voir le modèle en 360° et télécharger les fichiers.
 
+Ouvre `simulation.html` pour voir le robot sortir de la maison, traverser le champ, cueillir 5 tomates rouges + 8 vertes et vider son panier dans le grand bac — en tailles réelles, avec les mesures au clic.
+
 ## Fichiers
 
 | Fichier | Quantité | Rôle |
@@ -15,6 +17,7 @@ Ouvre `index.html` (ou le site déployé) pour voir le modèle en 360° et tél�
 | `stl/arbre-branche.stl` | ×6 | Branche + plot à 2 aimants |
 | `tomates.py` | — | Script paramétrique (build123d) qui régénère les STL |
 | `index.html` | — | Visionneuse 360° + téléchargements |
+| `simulation.html` | — | Simulation 3D de la récolte autonome (maison, champ, 5 rouges + 8 vertes, mesures au clic) |
 
 ## Aimants
 

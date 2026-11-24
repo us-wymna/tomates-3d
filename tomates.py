@@ -39,7 +39,10 @@ SLOT_Z0 = 27.0
 SLOT_Z1 = 30.4
 SLOT_ARC = 75.0            # rainure plus large que l'ergot (22 deg) pour le verrouillage a 60 deg
 
-CUP_R = 5.0
+BASE_R = 70.0              # rayon de la base (stabilite pour un arbre plus haut)
+TRUNK_H = 130.0            # hauteur d'un troncon (arbre total ~39 cm)
+TRUNK_PITCH = 122.0        # pas d'empilement (130 - 8 d'emboitement)
+HOLE_Z = 118.0             # hauteur des trous de branche dans le troncon
 
 OUT_DIR = os.path.expanduser("~/workspace/tomates3d/out")
 os.makedirs(OUT_DIR, exist_ok=True)
@@ -116,14 +119,15 @@ def build_body():
     return body
 
 
-def build_leaf():
-    pts = [(2.5, 11.5), (14.5, 8.8), (15.5, 9.6), (3.5, 13.0)]
+def build_sepal():
+    """Petit sepale du calice, façon pomme (5 autour du col)."""
+    pts = [(2.8, 10.8), (8.2, 9.8), (8.6, 10.6), (3.2, 11.8)]
     with BuildPart() as bp:
         with BuildSketch(Plane.XZ):
             with BuildLine():
                 Polyline(*pts, close=True)
             make_face()
-        extrude(amount=1.6, both=True)
+        extrude(amount=0.7, both=True)
     return bp.part
 
 
@@ -131,32 +135,56 @@ def build_stem():
     plug = Pos(0, 0, 4.5) * Cylinder(PLUG_R, 9.0)
     lug1 = Pos(7.7, 0, 3.5) * Box(LUG_R_OUT - PLUG_R, LUG_W, LUG_H)
     lug2 = Pos(-7.7, 0, 3.5) * Box(LUG_R_OUT - PLUG_R, LUG_W, LUG_H)
-    flange = Pos(0, 0, 10.0) * Cylinder(FLANGE_R, 2.0)
-    stem_cyl = Pos(0, 0, 14.0) * Cylinder(3.5, 6.0)
-    cup = Pos(0, 0, 21.0) * Cylinder(CUP_R, 8.0)
-    leaf = build_leaf()
-    leaves = leaf
-    for k in range(1, 6):
-        leaves = leaves + (Rot(0, 0, 60 * k) * leaf)
-    stem = plug + lug1 + lug2 + flange + stem_cyl + cup + leaves
+    collar = Pos(0, 0, 9.8) * Cylinder(8.0, 1.6)
+    # Col fin façon tige de pomme : profil tourne, resserre au milieu,
+    # s'evase vers la coupelle qui garde le logement des 3 aimants.
+    # Interfaces inchangees : plot + ergots + logement + hauteur totale 25.
+    neck_pts = [
+        (3.6, 10.0),
+        (3.3, 12.0),
+        (2.7, 14.0),
+        (2.4, 16.0),
+        (2.7, 17.2),
+        (4.8, 18.2),
+    ]
+    with BuildPart() as bp:
+        with BuildSketch(Plane.XZ):
+            with BuildLine():
+                Spline(*neck_pts)
+                Line(neck_pts[-1], (4.8, 20.0))
+                Line((4.8, 20.0), (4.6, 25.0))
+                Line((4.6, 25.0), (0.0, 25.0))
+                Line((0.0, 25.0), (0.0, 10.0))
+                Line((0.0, 10.0), neck_pts[0])
+            make_face()
+        revolve(revolution_arc=360)
+    neck = bp.part
+    sepal = build_sepal()
+    sepals = sepal
+    for k in range(1, 5):
+        sepals = sepals + (Rot(0, 0, 72 * k) * sepal)
+    stem = plug + lug1 + lug2 + collar + neck + sepals
     # Logement des 3 aimants de la tige (empiles), ouvert en haut.
     pocket = Pos(0, 0, 21.95) * Cylinder(POCKET_D / 2, 6.5)
     return stem - pocket
 
 
 def build_base():
-    base = Pos(0, 0, 4) * Cylinder(60, 8) + Pos(0, 0, 10) * Cylinder(14, 4)
+    base = Pos(0, 0, 4) * Cylinder(BASE_R, 8) + Pos(0, 0, 10) * Cylinder(14, 4)
     sock = Pos(0, 0, 7) * Cylinder(9.5, 10)
     return base - sock
 
 
 def build_trunk():
-    seg = Pos(0, 0, 36) * Cylinder(8.5, 72) + Pos(0, 0, -4) * Cylinder(7.2, 8)
-    seg = seg - Pos(0, 0, 68) * Cylinder(7.5, 8)
+    seg = (
+        Pos(0, 0, TRUNK_H / 2) * Cylinder(8.5, TRUNK_H)
+        + Pos(0, 0, -4) * Cylinder(7.2, 8)
+    )
+    seg = seg - Pos(0, 0, TRUNK_H - 4) * Cylinder(7.5, 8)
     for adeg in (0.0, 180.0):
         a = math.radians(adeg)
         hole = (
-            Pos(4 * math.cos(a), 4 * math.sin(a), 60)
+            Pos(4 * math.cos(a), 4 * math.sin(a), HOLE_Z)
             * Rot(0, 0, adeg)
             * Rot(0, 90, 0)
             * Cylinder(6.0, 12)

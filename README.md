@@ -10,8 +10,8 @@ Ouvre `index.html` (ou le site déployé) pour voir le modèle en 360° et tél�
 |---|---|---|
 | `stl/tomate-corps.stl` | ×40 (20 rouges + 20 vertes) | Corps creux, 10 logements d'aimants |
 | `stl/tomate-tige.stl` | ×40 | Tige + calice, baïonnette, logement de 3 aimants |
-| `stl/arbre-base.stl` | ×1 | Base Ø 120 mm |
-| `stl/arbre-tronc-segment.stl` | ×3 | Tronçon de tronc (2 trous de branche chacun) |
+| `stl/arbre-base.stl` | ×1 | Base Ø 140 mm |
+| `stl/arbre-tronc-segment.stl` | ×3 | Tronçon de tronc, 130 mm de haut (2 trous de branche chacun) |
 | `stl/arbre-branche.stl` | ×6 | Branche + plot à 2 aimants |
 | `tomates.py` | — | Script paramétrique (build123d) qui régénère les STL |
 | `index.html` | — | Visionneuse 360° + téléchargements |
@@ -39,7 +39,7 @@ Disques néodyme N52 de 6,00 × 2,00 mm (± 0,1 mm).
 - Couche 0,2 mm, 3 parois, remplissage 20-25 %. Pas de supports.
 - Corps : ouverture vers le haut. Tige : embout vers le bas. Base : à plat. Tronçon : debout, embout vers le bas.
 - **Branche : à l'envers**, le plot rond vers le haut (la poche d'aimant s'ouvre vers le haut).
-- Tailles : tomate ~33 mm de large, ~50 mm de haut assemblée. Arbre ~24 cm de haut, base 12 cm de diamètre. Environ 400 g de PLA avec 25 % de remplissage.
+- Tailles : tomate ~33 mm de large, ~50 mm de haut assemblée. Arbre ~39 cm de haut, base 14 cm de diamètre. Le slicer indiquera le poids exact de PLA.
 
 ## Modifier le modèle
 

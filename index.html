@@ -48,32 +48,34 @@
 <body>
 <div id="app"></div>
 <div id="ui">
-  <button data-view="tomate" class="active">Tomate</button>
-  <button data-view="corps">Corps + aimants</button>
-  <button data-view="tige">Tige</button>
-  <button data-view="arbre">Arbre + tomates</button>
-  <button data-view="branche">Branche</button>
-  <button id="btnRouge">Rouge</button>
-  <button id="btnVerte">Verte</button>
-  <button id="btnFiles">Fichiers STL</button>
-  <a href="simulation.html">Simulation robot</a>
+  <button data-view="tomate" class="active" data-i18n="v_tomato">Tomate</button>
+  <button data-view="corps" data-i18n="v_body">Corps + aimants</button>
+  <button data-view="tige" data-i18n="v_stem">Tige</button>
+  <button data-view="arbre" data-i18n="v_tree">Arbre + tomates</button>
+  <button data-view="branche" data-i18n="v_branch">Branche</button>
+  <button id="btnRouge" data-i18n="v_red">Rouge</button>
+  <button id="btnVerte" data-i18n="v_green">Verte</button>
+  <button id="btnFiles" data-i18n="v_files">Fichiers STL</button>
+  <button id="langFr" class="active">FR</button>
+  <button id="langEn">EN</button>
+  <a id="simLink" href="simulation.html" data-i18n="v_sim">Simulation robot</a>
 </div>
-<div id="info">Tomate Ø 33 mm — corps : 10 aimants · tige : 3 aimants · branche : 2 aimants (disques 6 × 2 mm). Glisse pour tourner, pince pour zoomer.</div>
+<div id="info" data-i18n="v_info">Tomate Ø 33 mm — corps : 10 aimants · tige : 3 aimants · branche : 2 aimants (disques 6 × 2 mm). Glisse pour tourner, pince pour zoomer.</div>
 <div id="panel">
-  <h2>Fichiers à télécharger</h2>
-  <p>Impression PLA — 0,2 mm, 3 parois, 20-25 %, sans supports. Branche à l'envers (plot vers le haut).</p>
+  <h2 data-i18n="v_panel_h2">Fichiers à télécharger</h2>
+  <p data-i18n="v_panel_p1">Impression PLA — 0,2 mm, 3 parois, 20-25 %, sans supports. Branche à l'envers (plot vers le haut).</p>
   <ul>
-    <li><a href="stl/tomate-corps.stl" download>tomate-corps.stl</a> — ×40 (20 rouges + 20 vertes) — 6,3 Mo</li>
-    <li><a href="stl/tomate-tige.stl" download>tomate-tige.stl</a> — ×40 — 1,9 Mo</li>
-    <li><a href="stl/arbre-base.stl" download>arbre-base.stl</a> — ×1 — 244 Ko</li>
-    <li><a href="stl/arbre-tronc-segment.stl" download>arbre-tronc-segment.stl</a> — ×3 — 378 Ko</li>
-    <li><a href="stl/arbre-branche.stl" download>arbre-branche.stl</a> — ×6 — 395 Ko</li>
-    <li><a href="tomates.py" download>tomates.py</a> — le script pour modifier les dimensions — 7 Ko</li>
-    <li><a href="README.md" download>README.md</a> — assemblage et réglages</li>
+    <li><a href="stl/tomate-corps.stl" download>tomate-corps.stl</a> <span data-i18n="v_li1">— ×40 (20 rouges + 20 vertes) — 6,3 Mo</span></li>
+    <li><a href="stl/tomate-tige.stl" download>tomate-tige.stl</a> <span data-i18n="v_li2">— ×40 — 1,9 Mo</span></li>
+    <li><a href="stl/arbre-base.stl" download>arbre-base.stl</a> <span data-i18n="v_li3">— ×1 — 244 Ko</span></li>
+    <li><a href="stl/arbre-tronc-segment.stl" download>arbre-tronc-segment.stl</a> <span data-i18n="v_li4">— ×3 — 378 Ko</span></li>
+    <li><a href="stl/arbre-branche.stl" download>arbre-branche.stl</a> <span data-i18n="v_li5">— ×6 — 395 Ko</span></li>
+    <li><a href="tomates.py" download>tomates.py</a> <span data-i18n="v_li6">— le script pour modifier les dimensions — 7 Ko</span></li>
+    <li><a href="README.md" download>README.md</a> <span data-i18n="v_li7">— assemblage et réglages</span></li>
   </ul>
-  <p>Aimants : 10 dans le corps, 3 empilés sur la tige, 2 par branche (disques 6 × 2 mm N52 — 532 au total). Vérifie que la tige et la branche s'attirent avant de coller.</p>
-  <p>Assemblage : tige enfoncée + quart de tour (~60°) pour verrouiller. La tomate se détache à l'arbre, pas au milieu.</p>
-  <p class="credit">Modèle redessiné par code à partir de « Mini Tomato » de fifindr (Printables) — usage personnel.</p>
+  <p data-i18n="v_magnets">Aimants : 10 dans le corps, 3 empilés sur la tige, 2 par branche (disques 6 × 2 mm N52 — 532 au total). Vérifie que la tige et la branche s'attirent avant de coller.</p>
+  <p data-i18n="v_assembly">Assemblage : tige enfoncée + quart de tour (~60°) pour verrouiller. La tomate se détache à l'arbre, pas au milieu.</p>
+  <p class="credit" data-i18n="v_credit">Modèle redessiné par code à partir de « Mini Tomato » de fifindr (Printables) — usage personnel.</p>
 </div>
 <script>/**
  * @license
@@ -346,8 +348,66 @@
   renderer.setAnimationLoop(function () {
     updateCamera(0.18);
     renderer.render(scene, camera);
-    if (++frames === 3) document.title = 'ready';
+    if (++frames === 3) document.title = trL('v_title');
   });
+
+  /* ---------- langue : français par défaut, anglais aussi (Canada) ---------- */
+  var langParams = new URLSearchParams(location.search);
+  var LANG = langParams.get('lang') === 'en' ? 'en' : 'fr';
+  if (langParams.get('lang') !== 'en' && langParams.get('lang') !== 'fr') {
+    try { LANG = localStorage.getItem('tomates-lang') === 'en' ? 'en' : 'fr'; } catch (e) { LANG = 'fr'; }
+  }
+  var VSTR = {
+    fr: {
+      v_title: 'Tomates 3D — visualisation',
+      v_tomato: 'Tomate', v_body: 'Corps + aimants', v_stem: 'Tige', v_tree: 'Arbre + tomates', v_branch: 'Branche',
+      v_red: 'Rouge', v_green: 'Verte', v_files: 'Fichiers STL', v_sim: 'Simulation robot',
+      v_info: 'Tomate Ø 33 mm — corps : 10 aimants · tige : 3 aimants · branche : 2 aimants (disques 6 × 2 mm). Glisse pour tourner, pince pour zoomer.',
+      v_panel_h2: 'Fichiers à télécharger',
+      v_panel_p1: 'Impression PLA — 0,2 mm, 3 parois, 20-25 %, sans supports. Branche à l\'envers (plot vers le haut).',
+      v_li1: '— ×40 (20 rouges + 20 vertes) — 6,3 Mo', v_li2: '— ×40 — 1,9 Mo', v_li3: '— ×1 — 244 Ko',
+      v_li4: '— ×3 — 378 Ko', v_li5: '— ×6 — 395 Ko',
+      v_li6: '— le script pour modifier les dimensions — 7 Ko', v_li7: '— assemblage et réglages',
+      v_magnets: 'Aimants : 10 dans le corps, 3 empilés sur la tige, 2 par branche (disques 6 × 2 mm N52 — 532 au total). Vérifie que la tige et la branche s\'attirent avant de coller.',
+      v_assembly: 'Assemblage : tige enfoncée + quart de tour (~60°) pour verrouiller. La tomate se détache à l\'arbre, pas au milieu.',
+      v_credit: 'Modèle redessiné par code à partir de « Mini Tomato » de fifindr (Printables) — usage personnel.'
+    },
+    en: {
+      v_title: '3D tomatoes — viewer',
+      v_tomato: 'Tomato', v_body: 'Body + magnets', v_stem: 'Stem', v_tree: 'Tree + tomatoes', v_branch: 'Branch',
+      v_red: 'Red', v_green: 'Green', v_files: 'STL files', v_sim: 'Robot simulation',
+      v_info: 'Tomato Ø 33 mm — body: 10 magnets · stem: 3 magnets · branch: 2 magnets (6 × 2 mm discs). Drag to rotate, pinch to zoom.',
+      v_panel_h2: 'Files to download',
+      v_panel_p1: 'PLA printing — 0.2 mm, 3 walls, 20-25% infill, no supports. Branch upside down (peg facing up).',
+      v_li1: '— ×40 (20 red + 20 green) — 6.3 MB', v_li2: '— ×40 — 1.9 MB', v_li3: '— ×1 — 244 KB',
+      v_li4: '— ×3 — 378 KB', v_li5: '— ×6 — 395 KB',
+      v_li6: '— the script to change the dimensions — 7 KB', v_li7: '— assembly and settings',
+      v_magnets: 'Magnets: 10 in the body, 3 stacked on the stem, 2 per branch (6 × 2 mm N52 discs — 532 total). Check that the stem and branch attract each other before gluing.',
+      v_assembly: 'Assembly: push the stem in + quarter turn (~60°) to lock. The tomato comes off at the tree, not in the middle.',
+      v_credit: 'Model redrawn in code from fifindr\'s “Mini Tomato” (Printables) — personal use.'
+    }
+  };
+  function trL(k) { return (VSTR[LANG] && VSTR[LANG][k]) || VSTR.fr[k] || k; }
+  function setLang(l) {
+    LANG = (l === 'en') ? 'en' : 'fr';
+    try { localStorage.setItem('tomates-lang', LANG); } catch (e) {}
+    document.documentElement.lang = LANG;
+    document.title = trL('v_title');
+    document.querySelectorAll('[data-i18n]').forEach(function (elm) { elm.textContent = trL(elm.getAttribute('data-i18n')); });
+    var bFr = document.getElementById('langFr'), bEn = document.getElementById('langEn');
+    if (bFr) bFr.classList.toggle('active', LANG === 'fr');
+    if (bEn) bEn.classList.toggle('active', LANG === 'en');
+    var simLink = document.getElementById('simLink');
+    if (simLink) simLink.href = 'simulation.html?lang=' + LANG;
+    try {
+      var u = new URL(location.href);
+      u.searchParams.set('lang', LANG);
+      history.replaceState(null, '', u.toString());
+    } catch (e) {}
+  }
+  document.getElementById('langFr').addEventListener('click', function () { setLang('fr'); });
+  document.getElementById('langEn').addEventListener('click', function () { setLang('en'); });
+  setLang(LANG);
 })();
 </script>
 </body>

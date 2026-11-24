@@ -161,7 +161,7 @@
   <div id="ordTraction">Simulation — terrain sec, vitesse normale.</div>
   <div class="orow">
     <span data-i18n="pick_label">Cueillir</span>
-    <input id="ordN" type="number" min="1" max="40" value="3">
+    <input id="ordN" type="number" min="1" max="500" value="3">
     <select id="ordColor">
       <option value="tomatoR">tomates rouges</option>
       <option value="tomatoG">tomates vertes</option>
@@ -248,7 +248,7 @@ var STR = {
     ord_dump: "Vider le panier au bac", ord_home: "Rentrer à la maison", ord_clear: "Annuler la file",
     ord_run: "▶ Vas-y", ord_running: "▶ En cours…", ord_run_n: "▶ Vas-y ({n} ordre{s})",
     orders_restore: "📋 Ordres", orders_restore_n: "📋 Ordres · {n} en cours",
-    queue_empty: "File vide.", queue_prefix: "File : ", basket_line: "Panier : {n} fruit(s) · {p} / 15 places",
+    queue_empty: "File vide.", queue_prefix: "File : ", basket_line: "Panier : {n} fruit(s) · {p} / 20 places",
     status_waiting: "En attente d'un ordre.",
     endcard_h2: "Récolte terminée",
     endcard_p: "Le panier a été vidé dans le grand bac. L'humain n'a plus qu'à venir récupérer.",
@@ -268,10 +268,14 @@ var STR = {
     phase_pick: "Cueille {item} — plant {n}.", phase_spray: "Arrose le plant {n}.",
     phase_scan: "Je cherche — les yeux scannent le plant {n}.",
     phase_dump: "Vide le panier dans le grand bac.",
-    phase_signal: "🔔 BING BING — le grand bac est plein ! Un humain arrive.",
-    phase_human_out: "Le cultivateur sort de la maison pour vider le grand bac.",
-    phase_human_empty: "Le cultivateur vide le grand bac et le remet en place.",
+    phase_signal: "🔔 BING BING — le tonneau est plein (30 fruits) ! Le cultivateur arrive.",
+    phase_human_stand: "Le cultivateur se lève — il a entendu le signal.",
+    phase_human_sit: "Le cultivateur se rassied chez lui.",
+    phase_human_out: "Le cultivateur sort de la maison pour vider le tonneau.",
+    phase_human_empty: "Le cultivateur vide le tonneau et le remet en place.",
     phase_human_back: "Le cultivateur rentre — le robot peut verser à nouveau.",
+    field_grown: "🌱 Champ agrandi automatiquement : {n} plants — ta commande + 20 %.",
+    speed_auto: "Vitesse auto {s}×", speed_max: "Vitesse 2× (max)",
     phase_drive_hard: "En route — œil avant : {terrain}, force motrice {f} %, ça passe.",
     phase_drive: "En route — {job}.",
     terrain_sun: "terrain sec", terrain_rain: "sol mouillé", terrain_snow: "neige 5 cm", terrain_snow15: "neige 10-20 cm", terrain_sand: "sable",
@@ -288,8 +292,8 @@ var STR = {
     chap_leaving: "Sortie de la maison", chap_trip: "Trajet vers le champ", chap_picking: "Cueillette",
     chap_full: "Panier plein", chap_dump: "Vidage au bac",
     end_harvested: "5 rouges + 8 vertes récoltées en {time}.",
-    orders_counter: "{s} — Panier : {p} / 15 places",
-    orders_counter_idle: "Mode ordres — {n} fruit(s) au panier ({p} / 15 places).",
+    orders_counter: "{s} — Panier : {p} / 20 places",
+    orders_counter_idle: "Mode ordres — {n} fruit(s) au panier ({p} / 20 places).",
     cine_counter: "Tomates : {d} / 13 · {r} rouges + {g} vertes",
     m_tomato_title: "Tomate", m_tomato_tag: "Mesures réelles — dessin agrandi pour la lisibilité",
     m_tomato_l1: "Diamètre : 33 mm", m_tomato_l2: "Paroi : 3,2 mm", m_tomato_l3: "10 logements d'aimants Ø 6,35 mm", m_tomato_l4: "Tige à baïonnette : pousser + quart de tour", dim_tomato: "Ø 33 mm réels",
@@ -307,8 +311,8 @@ var STR = {
     m_robot_l1: "Hauteur totale ~1,20 m (mât compris)", m_robot_l2: "4 roues ballon", m_robot_l3: "Châssis blanc, mât + boîtier rouge", m_robot_l4: "Conduite autonome", dim_robot: "Hauteur ~1,20 m",
     m_basket_title: "Panier de course", m_basket_tag: "Corbeille en grille métallique, style chariot",
     m_basket_l1: "13 tomates : 5 rouges + 8 vertes", m_basket_l2: "Grille métallique : on voit les tomates", m_basket_l3: "Bascule pour vider dans le grand bac", dim_basket: "Panier : ~0,52 m",
-    m_bin_title: "Grand bac", m_bin_tag: "",
-    m_bin_l1: "Le robot y verse sa récolte", m_bin_l2: "L'humain vient récupérer plus tard", m_bin_l3: "Placé près de la maison", dim_bin: "Bac : 1,20 m de large",
+    m_bin_title: "Grand tonneau de tri", m_bin_tag: "",
+    m_bin_l1: "Le robot verse dans la trémie, le tapis trie par produit", m_bin_l2: "Le cultivateur vient vider les casiers à 30 fruits", m_bin_l3: "5 casiers : un par produit, près de la maison", dim_bin: "Tonneau : 2,20 m de large · ~80 fruits",
     m_house_title: "Maison", m_house_tag: "Estimation — à confirmer",
     m_house_l1: "Le robot sort par la porte à 2 vantaux", m_house_l2: "La porte s'ouvre toute seule", m_house_l3: "Le robot part de la maison vers le champ", dim_house: "Ouverture : 2,60 m",
     m_field_title: "Champ", m_field_tag: "",
@@ -329,7 +333,7 @@ var STR = {
     ord_dump: "Empty the basket into the bin", ord_home: "Go back home", ord_clear: "Clear the queue",
     ord_run: "▶ Go", ord_running: "▶ Running…", ord_run_n: "▶ Go ({n} order{s})",
     orders_restore: "📋 Orders", orders_restore_n: "📋 Orders · {n} running",
-    queue_empty: "Queue empty.", queue_prefix: "Queue: ", basket_line: "Basket: {n} fruit(s) · {p} / 15 slots",
+    queue_empty: "Queue empty.", queue_prefix: "Queue: ", basket_line: "Basket: {n} fruit(s) · {p} / 20 slots",
     status_waiting: "Waiting for an order.",
     endcard_h2: "Harvest complete",
     endcard_p: "The basket was emptied into the big bin. A human just has to come collect it.",
@@ -349,10 +353,14 @@ var STR = {
     phase_pick: "Picking {item} — plant {n}.", phase_spray: "Watering plant {n}.",
     phase_scan: "Searching — the eyes are scanning plant {n}.",
     phase_dump: "Emptying the basket into the big bin.",
-    phase_signal: "🔔 BING BING — the big bin is full! A human is coming.",
-    phase_human_out: "The farmer comes out of the house to empty the big bin.",
-    phase_human_empty: "The farmer empties the big bin and puts it back.",
+    phase_signal: "🔔 BING BING — the barrel is full (30 fruits)! The farmer is coming.",
+    phase_human_stand: "The farmer stands up — he heard the signal.",
+    phase_human_sit: "The farmer sits back down at home.",
+    phase_human_out: "The farmer comes out of the house to empty the barrel.",
+    phase_human_empty: "The farmer empties the barrel and puts it back.",
     phase_human_back: "The farmer goes back inside — the robot can pour again.",
+    field_grown: "🌱 Field grown automatically: {n} plants — your order + 20%.",
+    speed_auto: "Speed auto {s}×", speed_max: "Speed 2× (max)",
     phase_drive_hard: "On the way — front eye: {terrain}, driving force {f}%, it's getting through.",
     phase_drive: "On the way — {job}.",
     terrain_sun: "dry ground", terrain_rain: "wet ground", terrain_snow: "snow 5 cm", terrain_snow15: "snow 10-20 cm", terrain_sand: "sand",
@@ -369,8 +377,8 @@ var STR = {
     chap_leaving: "Leaving the house", chap_trip: "Trip to the field", chap_picking: "Picking",
     chap_full: "Basket full", chap_dump: "Emptying into the bin",
     end_harvested: "5 red + 8 green harvested in {time}.",
-    orders_counter: "{s} — Basket: {p} / 15 slots",
-    orders_counter_idle: "Orders mode — {n} fruit(s) in the basket ({p} / 15 slots).",
+    orders_counter: "{s} — Basket: {p} / 20 slots",
+    orders_counter_idle: "Orders mode — {n} fruit(s) in the basket ({p} / 20 slots).",
     cine_counter: "Tomatoes: {d} / 13 · {r} red + {g} green",
     m_tomato_title: "Tomato", m_tomato_tag: "Real measurements — drawing enlarged for readability",
     m_tomato_l1: "Diameter: 33 mm", m_tomato_l2: "Wall: 3.2 mm", m_tomato_l3: "10 magnet pockets Ø 6.35 mm", m_tomato_l4: "Bayonet stem: push + quarter turn", dim_tomato: "Ø 33 mm real",
@@ -388,8 +396,8 @@ var STR = {
     m_robot_l1: "Total height ~1.20 m (mast included)", m_robot_l2: "4 balloon tires", m_robot_l3: "White chassis, red mast + box", m_robot_l4: "Self-driving", dim_robot: "Height ~1.20 m",
     m_basket_title: "Shopping basket", m_basket_tag: "Wire-mesh basket, cart style",
     m_basket_l1: "13 tomatoes: 5 red + 8 green", m_basket_l2: "Wire mesh: you can see the tomatoes", m_basket_l3: "Tilts to empty into the big bin", dim_basket: "Basket: ~0.52 m",
-    m_bin_title: "Big bin", m_bin_tag: "",
-    m_bin_l1: "The robot pours its harvest in here", m_bin_l2: "A human comes to collect later", m_bin_l3: "Placed near the house", dim_bin: "Bin: 1.20 m wide",
+    m_bin_title: "Big sorting barrel", m_bin_tag: "",
+    m_bin_l1: "The robot pours into the hopper, the belt sorts by crop", m_bin_l2: "The farmer comes to empty the compartments at 30 fruits", m_bin_l3: "5 compartments: one per crop, near the house", dim_bin: "Barrel: 2.20 m wide · ~80 fruits",
     m_house_title: "House", m_house_tag: "Estimate — to confirm",
     m_house_l1: "The robot leaves through the 2-panel door", m_house_l2: "The door opens by itself", m_house_l3: "The robot goes from the house to the field", dim_house: "Opening: 2.60 m",
     m_field_title: "Field", m_field_tag: "",
@@ -416,7 +424,7 @@ function setLang(l) {
   var simlink = document.querySelector("a.simlink");
   if (simlink) simlink.href = "index.html?lang=" + LANG;
   btnPlay.textContent = playing ? t("pause") : t("play");
-  document.getElementById("btnSpeed").textContent = t("speed", { s: speed });
+  refreshSpeedBtn();
   btnCam.textContent = freeMode ? t("cam_free") : t("cam_cine");
   btnMode.textContent = mode === "orders" ? t("mode_cine") : t("mode_orders");
   buildChapOptions();
@@ -450,8 +458,9 @@ var TREES = [
 var PICK_IDX = [[0, 1, 2], [0, 1, 2], [0, 1, 2], [0, 1], [0, 1]]; /* 13 tomates */
 var WHEEL_R = 0.15, SHOULDER = { x: 0.05, y: 0.40 };
 var ARM_L1 = 0.38, ARM_L2 = 0.35;
-var BIN = { x0: -5.1, x1: -3.9, top: 0.60 };
-var BIN_CAP = 30; /* le grand bac est plein à 30 fruits : le cultivateur sort le vider */
+var BIN = { x0: -6.2, x1: -4.0, top: 0.78 }; /* grand tonneau de tri : ~80 fruits, 5 casiers, un par produit */
+var BIN_CAP = 30; /* le tonneau signale à 30 fruits : le cultivateur sort le vider */
+var BASKET_PLACES = 20; /* le panier du robot prend 20 places (tomate/fraise 1, raisin 2, maïs 3) */
 var HOUSE = { x0: -11.5, x1: -6.5, doorX0: -9.6, doorX1: -7.0, wallH: 2.7 };
 
 var app = document.getElementById("app");
@@ -499,12 +508,12 @@ clouds.push(cloud(-9, 4.2, 1.1));
 clouds.push(cloud(-1, 4.7, 0.9));
 clouds.push(cloud(6.5, 4.3, 1.2));
 /* haie lointaine */
-for (var hi = 0; hi < 9; hi++) {
+for (var hi = 0; hi < 30; hi++) {
   el("ellipse", { cx: -13 + hi * 3.4, cy: 1.0, rx: 1.15, ry: 0.55, fill: "#9ab585", opacity: 0.45 }, gFar);
 }
 /* champ de maïs (arrière-plan, assourdi) */
 function hash(i) { var v = Math.sin(i * 127.1) * 43758.5453; return v - Math.floor(v); }
-for (var ci = 0; ci < 122; ci++) {
+for (var ci = 0; ci < 296; ci++) {
   var cx = -13.5 + ci * 0.35, ch = 0.85 + hash(ci) * 0.4;
   var cg = el("g", { transform: "translate(" + cx.toFixed(2) + ",0)" }, gFar);
   el("line", { x1: 0, y1: 0, x2: 0.03, y2: ch, stroke: "#5d7a45", "stroke-width": 0.035, "stroke-linecap": "round" }, cg);
@@ -513,28 +522,28 @@ for (var ci = 0; ci < 122; ci++) {
   el("ellipse", { cx: 0.05, cy: ch * 0.52, rx: 0.045, ry: 0.11, fill: "#d9c25a", opacity: 0.9, transform: "rotate(8 0.05 " + (ch * 0.52).toFixed(2) + ")" }, cg);
 }
 
-/* ---------- sol (large : le grand champ va jusqu'à x = 30) ---------- */
-el("rect", { x: -14, y: -8, width: 44, height: 8, fill: "#79a758" }, gGround);
-el("rect", { x: -14, y: -0.02, width: 44, height: 0.02, fill: "#6a9849" }, gGround);
+/* ---------- sol (large : le grand champ va jusqu'à x = 90) ---------- */
+el("rect", { x: -14, y: -8, width: 104, height: 8, fill: "#79a758" }, gGround);
+el("rect", { x: -14, y: -0.02, width: 104, height: 0.02, fill: "#6a9849" }, gGround);
 el("rect", { x: -9.8, y: -0.05, width: 10.8, height: 0.05, fill: "#c9a876" }, gGround);
 el("rect", { x: -9.8, y: -0.052, width: 10.8, height: 0.012, fill: "#b08f5e" }, gGround);
 /* chemin de terre sinueux du grand champ */
-el("path", { d: "M-1,0 Q4,-0.06 8,-0.02 T16,-0.05 T24,-0.02 L29,-0.04 L29,0 L-1,0 Z", fill: "#c9a876", opacity: 0.85 }, gGround);
+el("path", { d: "M-1,0 Q4,-0.06 8,-0.02 T16,-0.05 T24,-0.02 T32,-0.05 T40,-0.02 T48,-0.05 T56,-0.02 T64,-0.05 T72,-0.02 T80,-0.05 T88,-0.02 L89,-0.04 L89,0 L-1,0 Z", fill: "#c9a876", opacity: 0.85 }, gGround);
 for (var gi = 0; gi < 26; gi++) {
-  var gx = -13 + hash(gi + 40) * 26;
-  if (gx > -9.8 && gx < 10.8 && hash(gi + 90) < 0.7) continue; /* pas sur le chemin */
+  var gx = -13 + hash(gi + 40) * 100;
+  if (gx > -9.8 && hash(gi + 90) < 0.7) continue; /* pas sur le chemin */
   var gg = el("g", { transform: "translate(" + gx.toFixed(2) + ",0)" }, gGround);
   el("path", { d: "M0,0 Q-0.03,0.07 -0.07,0.10 M0,0 Q0,0.08 0,0.12 M0,0 Q0.03,0.07 0.07,0.10", stroke: "#5d8a3e", "stroke-width": 0.014, fill: "none", "stroke-linecap": "round" }, gg);
 }
 for (var fi = 0; fi < 8; fi++) {
-  var fx = -12 + hash(fi + 7) * 24;
+  var fx = -12 + hash(fi + 7) * 96;
   el("circle", { cx: fx, cy: 0.02, r: 0.025, fill: ["#ff8fb3", "#ffd166", "#ffffff"][fi % 3] }, gGround);
   el("circle", { cx: fx, cy: 0.02, r: 0.01, fill: "#e8a020" }, gGround);
 }
 
 /* ---------- intempéries : neige au sol, flaques (visibles selon le temps choisi) ---------- */
-var snowGround = el("rect", { x: -14, y: -0.06, width: 44, height: 0.075, fill: "#ffffff", opacity: 0 }, gGround);
-var sandGround = el("rect", { x: -14, y: -0.06, width: 44, height: 0.075, fill: "#e0c896", opacity: 0 }, gGround);
+var snowGround = el("rect", { x: -14, y: -0.06, width: 104, height: 0.075, fill: "#ffffff", opacity: 0 }, gGround);
+var sandGround = el("rect", { x: -14, y: -0.06, width: 104, height: 0.075, fill: "#e0c896", opacity: 0 }, gGround);
 var puddles = el("g", { opacity: 0 }, gGround);
 [[-4, 0.10], [6, 0.14], [15, 0.11]].forEach(function (p) {
   el("ellipse", { cx: p[0], cy: -0.035, rx: p[1], ry: 0.016, fill: "#7fa8c9", opacity: 0.8 }, puddles);
@@ -546,6 +555,29 @@ el("rect", { x: -10.82, y: 2.9, width: 0.32, height: 0.85, fill: "#c98a7a", stro
 /* ouverture (intérieur sombre) */
 el("rect", { x: HOUSE.doorX0, y: 0, width: HOUSE.doorX1 - HOUSE.doorX0, height: 2.0, fill: "#4a3f33" }, gHouse);
 el("rect", { x: HOUSE.doorX0, y: 0, width: HOUSE.doorX1 - HOUSE.doorX0, height: 2.0, fill: "none", stroke: "#8a7a63", "stroke-width": 0.03 }, gHouse);
+/* intérieur de la maison (visible quand les portes du garage sont ouvertes) :
+   le cultivateur est assis chez lui, une lampe signale le tonneau plein */
+var interiorG = el("g", {}, gHouse);
+el("rect", { x: HOUSE.doorX0 + 0.06, y: 0.06, width: HOUSE.doorX1 - HOUSE.doorX0 - 0.12, height: 1.88, fill: "#f7e8c9" }, interiorG);
+el("rect", { x: HOUSE.doorX0 + 0.06, y: 0, width: HOUSE.doorX1 - HOUSE.doorX0 - 0.12, height: 0.06, fill: "#c9a876" }, interiorG);
+el("rect", { x: -9.30, y: 0.30, width: 0.36, height: 0.05, fill: "#8a6f4a" }, interiorG);
+el("rect", { x: -9.30, y: 0.30, width: 0.05, height: 0.55, fill: "#8a6f4a" }, interiorG);
+el("line", { x1: -8.98, y1: 0, x2: -8.98, y2: 0.30, stroke: "#8a6f4a", "stroke-width": 0.03 }, interiorG);
+el("line", { x1: -9.28, y1: 0, x2: -9.28, y2: 0.30, stroke: "#8a6f4a", "stroke-width": 0.03 }, interiorG);
+el("circle", { cx: -7.35, cy: 1.72, r: 0.05, fill: "#8a7a63" }, interiorG);
+var lampGlow = el("circle", { cx: -7.35, cy: 1.72, r: 0.16, fill: "#ffd166", opacity: 0.12 }, interiorG);
+el("circle", { cx: -7.35, cy: 1.72, r: 0.05, fill: "#ffe9a8" }, interiorG);
+/* cultivateur assis sur sa chaise */
+var sitG = el("g", {}, gHouse);
+el("rect", { x: -9.10, y: 0.35, width: 0.20, height: 0.48, fill: "#c0392b" }, sitG);
+el("rect", { x: -9.08, y: 0.40, width: 0.07, height: 0.32, fill: "#a93226" }, sitG);
+el("circle", { cx: -9.045, cy: 0.36, r: 0.035, fill: "#e8b98a" }, sitG);
+el("circle", { cx: -9.00, cy: 0.94, r: 0.09, fill: "#e8b98a" }, sitG);
+el("rect", { x: -9.07, y: 1.00, width: 0.14, height: 0.06, fill: "#e8c84a" }, sitG);
+el("ellipse", { cx: -9.00, cy: 1.02, rx: 0.14, ry: 0.035, fill: "#e8c84a" }, sitG);
+el("rect", { x: -9.00, y: 0.30, width: 0.30, height: 0.09, fill: "#2e5fa3" }, sitG);
+el("rect", { x: -8.76, y: 0, width: 0.08, height: 0.32, fill: "#2e5fa3" }, sitG);
+el("rect", { x: -8.78, y: 0, width: 0.15, height: 0.07, fill: "#4a3527" }, sitG);
 /* vantaux coulissants (groupes : les lignes suivent le panneau) */
 var doorL = el("g", {}, gHouse);
 el("rect", { x: HOUSE.doorX0, y: 0.02, width: 1.3, height: 1.96, fill: "#e8dcc4", stroke: "#b3a483", "stroke-width": 0.02 }, doorL);
@@ -650,14 +682,28 @@ el("circle", { cx: -6.785, cy: 2.12, r: 0.09, fill: "#ffd76b", opacity: 0.25 }, 
   el("ellipse", { cx: sx, cy: -0.03, rx: 0.16, ry: 0.03, fill: "#d8d2c4" }, gHouse);
 });
 
-/* ---------- grand bac ---------- */
-el("polygon", { points: (BIN.x0 - 0.06) + ",0 " + (BIN.x1 + 0.06) + ",0 " + BIN.x1 + "," + BIN.top + " " + BIN.x0 + "," + BIN.top, fill: "#4a6fa5", stroke: "#35507c", "stroke-width": 0.02 }, gBin);
-el("rect", { x: BIN.x0, y: BIN.top - 0.02, width: BIN.x1 - BIN.x0, height: 0.06, fill: "#35507c" }, gBin);
+/* ---------- grand tonneau de tri + tapis roulant ---------- */
+el("polygon", { points: (BIN.x0 - 0.06) + ",0 " + (BIN.x1 + 0.06) + ",0 " + BIN.x1 + "," + BIN.top + " " + BIN.x0 + "," + BIN.top, fill: "#7a5a3a", stroke: "#5d4326", "stroke-width": 0.02 }, gBin);
+el("rect", { x: BIN.x0, y: BIN.top - 0.02, width: BIN.x1 - BIN.x0, height: 0.06, fill: "#5d4326" }, gBin);
+el("line", { x1: BIN.x0 - 0.04, y1: 0.18, x2: BIN.x1 + 0.04, y2: 0.18, stroke: "#3c3c3c", "stroke-width": 0.03 }, gBin);
+el("line", { x1: BIN.x0 - 0.04, y1: 0.55, x2: BIN.x1 + 0.04, y2: 0.55, stroke: "#3c3c3c", "stroke-width": 0.03 }, gBin);
 for (var bi = 1; bi < 5; bi++) {
   var bx = BIN.x0 + (BIN.x1 - BIN.x0) * bi / 5;
-  el("line", { x1: bx, y1: 0.03, x2: bx, y2: BIN.top - 0.02, stroke: "#35507c", "stroke-width": 0.018 }, gBin);
+  el("line", { x1: bx, y1: 0.03, x2: bx, y2: BIN.top - 0.02, stroke: "#5d4326", "stroke-width": 0.018 }, gBin);
 }
-el("rect", { x: BIN.x0 + 0.05, y: BIN.top - 0.16, width: BIN.x1 - BIN.x0 - 0.1, height: 0.12, fill: "#2c4266" }, gBin);
+/* pastilles couleur : un casier par produit */
+["#e23b2e", "#7cb342", "#f2c230", "#ef5a8a", "#8e6bb8"].forEach(function (cc, ci) {
+  el("circle", { cx: BIN.x0 + (BIN.x1 - BIN.x0) * (ci + 0.5) / 5, cy: BIN.top - 0.06, r: 0.035, fill: cc, stroke: "#3c2a1a", "stroke-width": 0.008 }, gBin);
+});
+/* trémie + tapis roulant : le robot verse dans la trémie, le tapis trie vers les casiers */
+el("polygon", { points: "-3.58,0.98 -3.12,0.98 -3.26,0.80 -3.44,0.80", fill: "#6b7280", stroke: "#4b5563", "stroke-width": 0.015 }, gBin);
+el("rect", { x: -3.60, y: 0.96, width: 0.50, height: 0.04, fill: "#4b5563" }, gBin);
+el("rect", { x: BIN.x1, y: 0.76, width: -3.30 - BIN.x1, height: 0.06, fill: "#3c3c3c" }, gBin);
+[-3.92, -3.68, -3.44].forEach(function (rx2) {
+  el("circle", { cx: rx2, cy: 0.79, r: 0.032, fill: "#9aa0a3", stroke: "#55595e", "stroke-width": 0.008 }, gBin);
+});
+el("line", { x1: -3.92, y1: 0.76, x2: -3.92, y2: 0, stroke: "#55595e", "stroke-width": 0.02 }, gBin);
+el("line", { x1: -3.38, y1: 0.76, x2: -3.38, y2: 0, stroke: "#55595e", "stroke-width": 0.02 }, gBin);
 var binTomatoes = el("g", {}, gBin);
 
 /* ---------- arbres + tomates ---------- */
@@ -747,8 +793,7 @@ var GRAND_LAYOUT = [];
     GRAND_LAYOUT.push({ x: +x.toFixed(2), type: types[i % 4], occ: (i === 3 || i === 8 || i === 14 || i === 19) });
   }
 })();
-var grandData = [];
-GRAND_LAYOUT.forEach(function (pl, pi) {
+function buildGrandPlant(pl, pi) {
   var g = el("g", { transform: "translate(" + pl.x + ",0)" }, gPlants);
   el("ellipse", { cx: 0, cy: 0.008, rx: 0.17, ry: 0.02, fill: "#000000", opacity: 0.10 }, g);
   var fruits = [];
@@ -765,7 +810,8 @@ GRAND_LAYOUT.forEach(function (pl, pi) {
   if (pl.type === "tomato") {
     el("rect", { x: -0.018, y: 0, width: 0.036, height: 0.30, fill: "#8a6f4a", stroke: "#6f5839", "stroke-width": 0.008 }, g);
     el("ellipse", { cx: 0, cy: -0.01, rx: 0.16, ry: 0.03, fill: "#a9855c" }, g);
-    [[-0.14, 0.42, "R"], [0.13, 0.36, "G"], [-0.10, 0.24, "G"], [0.11, 0.20, "R"], [0, 0.30, "G"]].forEach(function (b) {
+    [[-0.14, 0.42, "R"], [0.13, 0.36, "G"], [-0.10, 0.24, "G"], [0.11, 0.20, "R"], [0, 0.30, "G"]].forEach(function (b0) {
+      var b = [b0[0], b0[1], pl.uniform || b0[2]]; /* plant uniforme (champ généré) ou mixte (champ classique) */
       el("line", { x1: 0, y1: b[1] - 0.10, x2: b[0], y2: b[1], stroke: "#4a7a2e", "stroke-width": 0.011, "stroke-linecap": "round" }, g);
       el("ellipse", { cx: b[0] * 0.5, cy: b[1] - 0.05, rx: 0.05, ry: 0.018, fill: "#4e8a35", transform: "rotate(" + (b[0] > 0 ? -30 : 30) + " " + (b[0] * 0.5).toFixed(3) + " " + (b[1] - 0.05).toFixed(3) + ")" }, g);
       addFruit("tomato", b[0], b[1] - 0.05, b[2]);
@@ -803,9 +849,79 @@ GRAND_LAYOUT.forEach(function (pl, pi) {
     el("ellipse", { cx: -0.06, cy: 0.28, rx: 0.15, ry: 0.12, fill: "#5d9a3e" }, occ);
     el("ellipse", { cx: 0.12, cy: 0.22, rx: 0.11, ry: 0.09, fill: "#437a2c" }, occ);
   }
-  grandData.push({ x: pl.x, g: g, branches: fruits });
-});
+  return { x: pl.x, g: g, branches: fruits };
+}
+var grandData = [];
+GRAND_LAYOUT.forEach(function (pl, pi) { grandData.push(buildGrandPlant(pl, pi)); });
 var fieldData = treeData; /* champ actif : treeData (petit) ou grandData (grand mixte) */
+
+/* ---------- champ dynamique : le champ grandit selon la commande ---------- */
+/* On commande 30 rouges + 60 vertes ? Le champ se remplit tout seul avec la
+   quantité demandée + 20 % (on ne laisse jamais un champ vide), puis le robot
+   récolte le nombre exact demandé. */
+var fieldMaxX = 29, grandGrown = false, grownNote = null;
+function cropOfBr(br) { return br.type === "corn" ? "corn" : br.type === "strawberry" ? "strawberry" : br.type === "grape" ? "grape" : (br.col === "R" ? "tomatoR" : "tomatoG"); }
+var BIN_COMPARTMENTS = ["tomatoR", "tomatoG", "corn", "strawberry", "grape"];
+function binSlotFor(crop, k) {
+  var ci = BIN_COMPARTMENTS.indexOf(crop); if (ci < 0) ci = 0;
+  var w = (BIN.x1 - BIN.x0) / 5;
+  return { x: BIN.x0 + ci * w + 0.11 + (k % 2) * 0.20, y: 0.055 + Math.floor(k / 2) * 0.09 };
+}
+function fieldStock() {
+  var s = {};
+  grandData.forEach(function (td, ti) {
+    td.branches.forEach(function (br) {
+      if (ordState.branchState["G" + ti + "-" + br.idx] === "tree") {
+        var c = cropOfBr(br); s[c] = (s[c] || 0) + 1;
+      }
+    });
+  });
+  return s;
+}
+function genLayout(need) {
+  var PER = { tomatoR: 5, tomatoG: 5, corn: 2, strawberry: 5, grape: 2 };
+  var CROPS = ["tomatoR", "tomatoG", "corn", "strawberry", "grape"];
+  var remaining = {};
+  CROPS.forEach(function (c) { remaining[c] = Math.ceil((need[c] || 0) / PER[c]); });
+  var layout = [], i = 0, progressed = true;
+  while (layout.length < 68 && progressed) {
+    progressed = false;
+    for (var k = 0; k < CROPS.length && layout.length < 68; k++) {
+      var c = CROPS[k];
+      if (remaining[c] > 0) {
+        remaining[c]--; progressed = true;
+        var x = 0.2 + i * 1.30 + (hash(i + 500) - 0.5) * 0.5;
+        var pl = { x: +x.toFixed(2), occ: hash(i * 13 + 7) < 0.16 };
+        if (c === "tomatoR" || c === "tomatoG") { pl.type = "tomato"; pl.uniform = c === "tomatoR" ? "R" : "G"; }
+        else pl.type = c;
+        layout.push(pl); i++;
+      }
+    }
+  }
+  return layout;
+}
+function rebuildGrandField(layout) {
+  while (gPlants.firstChild) gPlants.removeChild(gPlants.firstChild);
+  grandData = [];
+  layout.forEach(function (pl, pi) { grandData.push(buildGrandPlant(pl, pi)); });
+  grandData.forEach(function (td) { td.branches.forEach(function (br) { ordState.branchState["G" + br.tree + "-" + br.idx] = "tree"; }); });
+  fieldData = grandData;
+  fieldMaxX = grandData.length ? grandData[grandData.length - 1].x + 2 : 29;
+}
+function ensureFieldFor(wants) {
+  if (field !== "grand" || ordState.basket.length) return;
+  var stock = fieldStock(), need = {}, regen = false;
+  Object.keys(wants).forEach(function (c) {
+    need[c] = Math.ceil(wants[c] * 1.2);
+    if ((stock[c] || 0) < need[c]) regen = true;
+  });
+  if (!regen) return;
+  var layout = genLayout(need);
+  rebuildGrandField(layout);
+  grandGrown = true;
+  grownNote = t("field_grown", { n: layout.length });
+  renderQueue();
+}
 
 /* ---------- précipitations (coordonnées écran, par-dessus la scène) ---------- */
 var gWx = el("g", { "pointer-events": "none" }, svg);
@@ -1004,6 +1120,8 @@ for (var st = 0; st < 3; st++) {
 var ring = el("circle", { cx: 0, cy: 0, r: TOM_R + 0.02, fill: "none", stroke: "#ff5a1f", "stroke-width": 0.008, "stroke-dasharray": "0.02 0.012", opacity: 0 }, gFx);
 /* gouttelettes d'arrosage (mode ordres) + jet */
 var sprayJet = el("line", { x1: 0, y1: 0, x2: 0, y2: 0, stroke: "#4aa3df", "stroke-width": 0.014, opacity: 0, "stroke-dasharray": "0.03 0.02", "stroke-linecap": "round" }, gFx);
+var sprayJet2 = el("line", { x1: 0, y1: 0, x2: 0, y2: 0, stroke: "#4aa3df", "stroke-width": 0.011, opacity: 0, "stroke-dasharray": "0.03 0.02", "stroke-linecap": "round" }, gFx);
+var sprayJet3 = el("line", { x1: 0, y1: 0, x2: 0, y2: 0, stroke: "#4aa3df", "stroke-width": 0.011, opacity: 0, "stroke-dasharray": "0.03 0.02", "stroke-linecap": "round" }, gFx);
 var sprayDrops = [];
 for (var sd = 0; sd < 14; sd++) {
   sprayDrops.push({ el: el("circle", { cx: 0, cy: 0, r: 0.014, fill: "#4aa3df", opacity: 0 }, gFx) });
@@ -1057,8 +1175,8 @@ var buildPlan = null, T_END = 0;
 
 /* slots du panier (coordonnées locales du panier) */
 var basketSlots = [];
-for (var sr = 0; sr < 3; sr++) for (var sc = 0; sc < 5; sc++) {
-  basketSlots.push({ x: 0.05 + sc * 0.095, y: 0.055 + sr * 0.105 });
+for (var sr = 0; sr < 4; sr++) for (var sc = 0; sc < 5; sc++) {
+  basketSlots.push({ x: 0.05 + sc * 0.095, y: 0.05 + sr * 0.085 });
 }
 var pickedTomatoes = []; /* {branch, el, slot, binSlot} — reconstruit à chaque plan */
 function rebuildPicked() {
@@ -1174,7 +1292,7 @@ var spraySegs = []; /* {tree, t0, t1} du plan courant (vide en cinématique) */
 var scans = []; /* pauses de détection des yeux {tree, t0, t1} */
 var humanSegs = []; /* séquence du cultivateur {kind: signal|walk|empty, ...} du plan courant */
 var humanCamW = 0, lastHumanSeg = null; /* fondu de la caméra vers le cultivateur */
-var ordState = { pos: -8.3, face: 1, basket: [], basketPlaces: 0, binCount: 0, branchState: {} };
+var ordState = { pos: -8.3, face: 1, basket: [], basketPlaces: 0, binCount: 0, binByCrop: {}, branchState: {} };
 var ordQueue = []; /* ordres en attente : {kind, ...} */
 var ordJob = null; /* ordre en cours d'exécution */
 
@@ -1189,13 +1307,22 @@ function humanXAtSeg(sg, T) {
     var u = clamp((T - sg.t0) / Math.max(sg.t1 - sg.t0, 0.001), 0, 1);
     return lerp(sg.x0, sg.x1, u);
   }
-  return sg.kind === "empty" ? sg.x : -4.5;
+  return (sg.x !== undefined) ? sg.x : -4.5;
 }
 function updateScene(T) {
   /* porte */
   var doorU = mode === "orders" ? 1 : smooth(T / 2.2);
   doorL.setAttribute("transform", "translate(" + (-doorU * 1.28).toFixed(3) + ",0)");
   doorR.setAttribute("transform", "translate(" + (doorU * 1.28).toFixed(3) + ",0)");
+  /* cultivateur chez lui : assis dans la maison, il se lève au signal */
+  var hsDoor = humanSegAt(T), sitOp = 1;
+  if (hsDoor) {
+    if (hsDoor.kind === "stand") sitOp = 1 - clamp((T - hsDoor.t0) / Math.max(hsDoor.t1 - hsDoor.t0, 0.001), 0, 1);
+    else if (hsDoor.kind === "sit") sitOp = clamp((T - hsDoor.t0) / Math.max(hsDoor.t1 - hsDoor.t0, 0.001), 0, 1);
+    else if (hsDoor.kind !== "signal") sitOp = 0;
+  }
+  sitG.setAttribute("opacity", (doorU * sitOp).toFixed(3));
+  lampGlow.setAttribute("opacity", (hsDoor && hsDoor.kind === "signal") ? ((Math.floor(T * 4) % 2 === 0) ? 0.85 : 0.2).toFixed(2) : 0.12);
   /* nuages (dérive lente, fonction de T pour rester déterministe) */
   clouds.forEach(function (c, i) {
     var bx = [-9, -1, 6.5][i];
@@ -1241,13 +1368,17 @@ function updateScene(T) {
     signalG.setAttribute("opacity", (Math.floor(T * 4) % 2 === 0) ? 1 : 0.25);
     signalG.setAttribute("transform", "translate(" + rx.toFixed(3) + ",0)");
   } else if (hs) {
-    var hx, hface, hwalk = false, hcarry = false, hempty = false;
+    var hx, hface, hwalk = false, hcarry = false, hempty = false, hfade = 1;
     if (hs.kind === "walk") {
       hx = humanXAtSeg(hs, T); hface = hs.x1 >= hs.x0 ? 1 : -1; hwalk = true; hcarry = !!hs.carry;
+    } else if (hs.kind === "stand" || hs.kind === "sit") {
+      hx = hs.x; hface = 1;
+      var uu = clamp((T - hs.t0) / Math.max(hs.t1 - hs.t0, 0.001), 0, 1);
+      hfade = hs.kind === "stand" ? uu : 1 - uu;
     } else { hx = hs.x; hface = 1; hempty = true; }
     var sw = hwalk ? Math.sin(T * 7) * 0.38 : 0;
     var hbob = hwalk ? Math.abs(Math.sin(T * 7)) * 0.02 : 0;
-    gHuman.setAttribute("opacity", 1);
+    gHuman.setAttribute("opacity", hfade);
     gHuman.setAttribute("transform", "translate(" + hx.toFixed(3) + "," + hbob.toFixed(3) + ") scale(" + hface + ",1)");
     legL.setAttribute("transform", "translate(-0.055,0.84) rotate(" + (sw * 57.3).toFixed(1) + ")");
     legR.setAttribute("transform", "translate(0.055,0.84) rotate(" + (-sw * 57.3).toFixed(1) + ")");
@@ -1266,23 +1397,39 @@ function updateScene(T) {
   humanSegs.forEach(function (sg) {
     if (sg.kind !== "empty") return;
     if (T >= sg.t0 && T <= sg.t1) emptyActive = sg;
-    if (T >= sg.t1 && !sg._emptied) { sg._emptied = true; while (binTomatoes.firstChild) binTomatoes.removeChild(binTomatoes.firstChild); }
+    if (T >= sg.t1 && !sg._emptied) {
+      sg._emptied = true;
+      pickedTomatoes.forEach(function (pt2, pi2) {
+        var pk2 = picks[pi2];
+        if (pk2 && pt2.branch && isFinite(pk2.dumpT) && pk2.dumpT < sg.t0) pt2.branch._gone = true;
+      });
+      while (binTomatoes.firstChild) binTomatoes.removeChild(binTomatoes.firstChild);
+    }
   });
   binTomatoes.setAttribute("opacity", emptyActive ? (1 - smooth((T - emptyActive.t0) / Math.max(emptyActive.t1 - emptyActive.t0, 0.001))).toFixed(3) : 1);
   /* basculement du panier */
   var tiltU = 0;
-  if (T >= buildPlan.dumpT0 + 0.6) tiltU = smooth((T - buildPlan.dumpT0 - 0.6) / 1.0);
-  if (T >= buildPlan.dumpT0 + 4.6) tiltU = 1 - smooth((T - buildPlan.dumpT0 - 4.6) / 0.8);
+  (buildPlan.dumpTimes || []).forEach(function (dt) {
+    var u2 = 0;
+    if (T >= dt + 4.6) u2 = 1 - smooth((T - dt - 4.6) / 0.8);
+    else if (T >= dt + 0.6) u2 = smooth((T - dt - 0.6) / 1.0);
+    tiltU = Math.max(tiltU, u2);
+  });
   tiltU = clamp(tiltU, 0, 1);
   basketPivot.setAttribute("transform", "translate(0.30,0.26) rotate(" + (-55 * tiltU).toFixed(1) + ")");
   var tiltA = -55 * tiltU * Math.PI / 180;
 
   /* bras + tomates — dérivation sans état (compatible avec le scrub) */
   function tiltUAt(t) {
-    if (t < buildPlan.dumpT0 + 0.6) return 0;
-    if (t < buildPlan.dumpT0 + 1.6) return smooth((t - buildPlan.dumpT0 - 0.6) / 1.0);
-    if (t < buildPlan.dumpT0 + 4.6) return 1;
-    return 1 - smooth((t - buildPlan.dumpT0 - 4.6) / 0.8);
+    var best = 0;
+    (buildPlan.dumpTimes || []).forEach(function (dt) {
+      var u2 = 0;
+      if (t >= dt + 4.6) u2 = 1 - smooth((t - dt - 4.6) / 0.8);
+      else if (t >= dt + 1.6) u2 = 1;
+      else if (t >= dt + 0.6) u2 = smooth((t - dt - 0.6) / 1.0);
+      best = Math.max(best, u2);
+    });
+    return best;
   }
   var armPose = REST, grip = 0, suction = 0;
   var wristWorld = null;
@@ -1333,12 +1480,15 @@ function updateScene(T) {
   pickedTomatoes.forEach(function (pt, pi) {
     var pk = picks[pi];
     var br = pt.branch;
+    if (br && br._gone) { if (pt.el.parentNode) pt.el.parentNode.removeChild(pt.el); return; }
     if (!pt.slot || !pt.binSlot || !pk) return; /* jamais de crash ici : la boucle ne doit pas mourir */
     function place(parent, tx, ty) {
       if (pt.el.parentNode !== parent) parent.appendChild(pt.el);
       pt.el.setAttribute("transform", "translate(" + tx.toFixed(3) + "," + ty.toFixed(3) + ")");
     }
-    var dT0 = buildPlan.dumpT0 + 1.4 + pi * 0.12;
+    var baseDump = (pk.dumpT !== undefined) ? pk.dumpT : buildPlan.dumpT0;
+    var stag = (pk.dumpK !== undefined) ? pk.dumpK * 0.12 : pi * 0.12;
+    var dT0 = baseDump + 1.4 + stag;
     if (T >= dT0) {
       var u = clamp((T - dT0) / 0.7, 0, 1);
       if (u >= 1) { place(binTomatoes, pt.binSlot.x, pt.binSlot.y); return; }
@@ -1354,7 +1504,7 @@ function updateScene(T) {
     var target = { x: br.x, y: br.y };
     var sol = solveArm(target.x, target.y, shoulderWorld.x, shoulderWorld.y);
     var wpos = { x: shoulderWorld.x + ARM_L1 * Math.sin(sol.phi1) + ARM_L2 * Math.sin(sol.phi1 + sol.phi2), y: shoulderWorld.y + ARM_L1 * Math.cos(sol.phi1) + ARM_L2 * Math.cos(sol.phi1 + sol.phi2) };
-    if (ph < 0.48) { place(treeData[br.tree].g, br.localX, br.localY); return; }
+    if (ph < 0.48) { place(fieldData[br.tree].g, br.localX, br.localY); return; }
     if (ph < 0.80) { place(gFx, wpos.x - 0.02, wpos.y - 0.10); return; }
     var u2 = smooth((ph - 0.80) / 0.20);
     var from2 = { x: wpos.x - 0.02, y: wpos.y - 0.10 };
@@ -1362,27 +1512,36 @@ function updateScene(T) {
     var mid2 = { x: (from2.x + to2.x) / 2 + 0.05, y: Math.max(from2.y, to2.y) + 0.28 };
     place(gFx, lerp(lerp(from2.x, mid2.x, u2), lerp(mid2.x, to2.x, u2), u2), lerp(lerp(from2.y, mid2.y, u2), lerp(mid2.y, to2.y, u2), u2));
   });
-  /* arrosage (mode ordres) : bras levé vers le feuillage + gouttelettes */
+  /* arrosage (mode ordres) : le bras descend pour les fruits bas, jet large en éventail */
   var sprayActive = null;
   spraySegs.forEach(function (sg) { if (T >= sg.t0 && T <= sg.t1) sprayActive = sg; });
   if (sprayActive) {
     var treeX = fieldData[sprayActive.tree].x;
+    var aimY = sprayActive.aimY || 0.72;
     var shS = { x: rx + f * SHOULDER.x, y: SHOULDER.y + bob };
-    var solS = solveArm(treeX - 0.12, 0.72, shS.x, shS.y);
+    var solS = solveArm(treeX - 0.26, aimY + 0.30, shS.x, shS.y);
     armPose = solS; grip = 0; suction = 0;
     var wS = solS.wrist;
     sprayJet.setAttribute("x1", wS.x); sprayJet.setAttribute("y1", wS.y);
-    sprayJet.setAttribute("x2", treeX); sprayJet.setAttribute("y2", 0.70);
+    sprayJet.setAttribute("x2", treeX - 0.05); sprayJet.setAttribute("y2", aimY);
     sprayJet.setAttribute("opacity", 0.7);
+    sprayJet2.setAttribute("x1", wS.x); sprayJet2.setAttribute("y1", wS.y);
+    sprayJet2.setAttribute("x2", treeX - 0.16); sprayJet2.setAttribute("y2", aimY + 0.10);
+    sprayJet2.setAttribute("opacity", 0.45);
+    sprayJet3.setAttribute("x1", wS.x); sprayJet3.setAttribute("y1", wS.y);
+    sprayJet3.setAttribute("x2", treeX + 0.06); sprayJet3.setAttribute("y2", aimY - 0.08);
+    sprayJet3.setAttribute("opacity", 0.45);
     sprayDrops.forEach(function (dp, di) {
       var ph = ((T - sprayActive.t0) * 1.3 + di / sprayDrops.length) % 1;
-      var dx2 = wS.x + (treeX - wS.x) * ph;
-      var dy2 = wS.y + (0.72 - wS.y) * ph - Math.sin(ph * Math.PI) * 0.10;
+      var dx2 = wS.x + (treeX - 0.05 - wS.x) * ph;
+      var dy2 = wS.y + (aimY - wS.y) * ph - Math.sin(ph * Math.PI) * 0.10;
       dp.el.setAttribute("cx", dx2.toFixed(3)); dp.el.setAttribute("cy", dy2.toFixed(3));
       dp.el.setAttribute("opacity", 0.85);
     });
   } else {
     sprayJet.setAttribute("opacity", 0);
+    sprayJet2.setAttribute("opacity", 0);
+    sprayJet3.setAttribute("opacity", 0);
     sprayDrops.forEach(function (dp) { dp.el.setAttribute("opacity", 0); });
   }
   /* bras au repos : replié */
@@ -1510,7 +1669,7 @@ function applyCamera(T, dt) {
       var target = robotXAt(T) + 0.5;
       freeCam.x += (target - freeCam.x) * Math.min(1, (dt || 0.016) * 2.2);
     }
-    freeCam.x = clamp(freeCam.x, -13, (mode === "orders" && field === "grand") ? 27 : 13);
+    freeCam.x = clamp(freeCam.x, -13, (mode === "orders" && field === "grand") ? fieldMaxX : 13);
     freeCam.y = clamp(freeCam.y, -2, 4.5);
     cam.x = freeCam.x; cam.y = freeCam.y; cam.k = freeCam.k;
   }
@@ -1518,8 +1677,8 @@ function applyCamera(T, dt) {
   /* le cultivateur : la caméra s'écarte pour le voir marcher de la maison au bac (mode ordres) */
   if (mode === "orders") {
     var hsC = humanSegAt(T);
-    if (hsC && hsC.kind !== "signal") lastHumanSeg = hsC;
-    var wantC = (hsC && hsC.kind !== "signal") ? 1 : 0;
+    if (hsC) lastHumanSeg = hsC;
+    var wantC = hsC ? 1 : 0;
     humanCamW += (wantC - humanCamW) * Math.min(1, (dt || 0.016) * 4);
     if (humanCamW > 0.01 && lastHumanSeg) {
       var hxC = humanXAtSeg(lastHumanSeg, Math.min(Math.max(T, lastHumanSeg.t0), lastHumanSeg.t1));
@@ -1607,6 +1766,22 @@ var endcard = document.getElementById("endcard");
 var ui = document.getElementById("ui");
 var uiRestore = document.getElementById("uiRestore");
 var T = 0, playing = true, speed = 1, ended = false;
+/* vitesse auto selon la charge : 1,2× par défaut, jusqu'à 2× max pour les grosses commandes */
+var speedMode = "auto";
+function fmtDec(x) { return x.toFixed(1).replace(".", LANG === "fr" ? "," : "."); }
+function jobSpeedFor(job) {
+  var work = 0;
+  if (job.kind === "pick") {
+    Object.keys(job.wants || {}).forEach(function (c) { work += job.wants[c]; });
+    if (!work && job.crop) work = job.n || 0;
+  } else if (job.kind === "spray") work = fieldData.length;
+  return Math.min(2, Math.round(Math.max(1.2, 1.2 + Math.max(0, work - 10) * 0.012) * 10) / 10);
+}
+function refreshSpeedBtn() {
+  var b = document.getElementById("btnSpeed");
+  if (!b) return;
+  b.textContent = speedMode === "max" ? t("speed_max") : t("speed_auto", { s: fmtDec(speed) });
+}
 var params = new URLSearchParams(location.search);
 if (params.get("t")) T = clamp(parseFloat(params.get("t")) || 0, 0, T_END);
 if (params.get("play") === "0") playing = false;
@@ -1621,8 +1796,11 @@ document.getElementById("btnRestart").addEventListener("click", function () { T 
 document.getElementById("btnReplay").addEventListener("click", function () { T = 0; ended = false; endcard.classList.remove("open"); setPlaying(true); });
 document.getElementById("endClose").addEventListener("click", function () { endcard.classList.remove("open"); });
 document.getElementById("btnSpeed").addEventListener("click", function () {
-  speed = speed === 1 ? 2 : 1;
-  document.getElementById("btnSpeed").textContent = t("speed", { s: speed });
+  speedMode = speedMode === "auto" ? "max" : "auto";
+  if (mode === "cine") speed = (speedMode === "max") ? 2 : 1;
+  else if (ordJob) speed = (speedMode === "max") ? 2 : jobSpeedFor(ordJob);
+  else speed = 1.2;
+  refreshSpeedBtn();
 });
 function setFreeMode(on) {
   freeMode = on;
@@ -1738,6 +1916,7 @@ function resetField() {
     pair[1].forEach(function (td) {
       td.branches.forEach(function (br) {
         ordState.branchState[pair[0] + br.tree + "-" + br.idx] = "tree";
+        br._gone = false;
         if (br.el.parentNode !== td.g) td.g.appendChild(br.el);
         br.el.setAttribute("transform", "translate(" + br.localX.toFixed(3) + "," + br.localY.toFixed(3) + ")");
       });
@@ -1746,6 +1925,7 @@ function resetField() {
   ordState.basket = [];
   ordState.basketPlaces = 0;
   ordState.binCount = 0;
+  ordState.binByCrop = {};
   spraySegs = [];
 }
 function idlePlan() {
@@ -1755,11 +1935,14 @@ function applyPlan(p, cine) {
   fieldData = p.grand ? grandData : treeData;
   legs = p.legs; picks = p.picks; spraySegs = p.spray || []; scans = p.scans || []; humanSegs = p.human || [];
   flipList = p.flips; facingStart = p.faceStart;
-  buildPlan = { T_END: p.T_END, revT0: Infinity, flipT0: p.flips.length ? p.flips[0].t0 : Infinity, dumpT0: p.dumpT0 };
+  buildPlan = { T_END: p.T_END, revT0: Infinity, flipT0: p.flips.length ? p.flips[0].t0 : Infinity, dumpT0: p.dumpT0, dumpTimes: p.dumpTimes || (isFinite(p.dumpT0) ? [p.dumpT0] : []) };
   T_END = p.T_END;
   rebuildPicked();
   shots = buildShots(!!cine);
   T = 0; ended = false;
+  if (cine) speed = (speedMode === "max") ? 2 : 1;
+  else if (ordJob && ordJob.kind) speed = (speedMode === "max") ? 2 : jobSpeedFor(ordJob);
+  refreshSpeedBtn();
   lastRX = p.legs[0].x0; lastRx = p.legs[0].x0;
 }
 function routeOrder(treesNeeded, x) {
@@ -1781,7 +1964,7 @@ function fruitMatches(br, crop) {
 function buildJobPlan(job) {
   fieldData = field === "grand" ? grandData : treeData;
   var legs2 = [], picks2 = [], spray2 = [], flips = [], scans2 = [], humanSegs2 = [];
-  var t = 0.8, x = ordState.pos, face = ordState.face, dumpT0 = Infinity;
+  var t = 0.8, x = ordState.pos, face = ordState.face, dumpT0 = Infinity, dumpTimes = [];
   function legTo(x1, v) {
     var d = Math.abs(x1 - x);
     if (d < 0.01) return;
@@ -1802,11 +1985,14 @@ function dumpSeq() {
     ensureFace(-1);
     legTo(-3.6, DRIVE_V);
     if (ordState.binCount + load.length > BIN_CAP) {
-      /* le grand bac est plein : le robot signale (BING BING), le cultivateur
-         sort de la maison, vide le bac et le remet en place, puis le robot verse */
-      humanSegs2.push({ kind: "signal", t0: t, t1: t + 2.2 });
+      /* le tonneau est plein (30 fruits) : le robot signale (BING BING), le
+         cultivateur se lève chez lui, sort de la maison, vide le tonneau et
+         le remet en place, rentre et se rassied, puis le robot verse */
+      var doorX = -9.0, binX = -5.9;
+      humanSegs2.push({ kind: "signal", x: doorX, t0: t, t1: t + 2.2 });
       t += 2.2;
-      var doorX = (HOUSE.doorX0 + HOUSE.doorX1) / 2, binX = -4.7;
+      humanSegs2.push({ kind: "stand", x: doorX, t0: t, t1: t + 0.9 });
+      t += 0.9;
       var walkDur = Math.abs(binX - doorX) / 1.2;
       humanSegs2.push({ kind: "walk", x0: doorX, x1: binX, t0: t, t1: t + walkDur, carry: false });
       t += walkDur;
@@ -1814,16 +2000,23 @@ function dumpSeq() {
       t += 1.8;
       humanSegs2.push({ kind: "walk", x0: binX, x1: doorX, t0: t, t1: t + walkDur, carry: true });
       t += walkDur;
+      humanSegs2.push({ kind: "sit", x: doorX, t0: t, t1: t + 0.9 });
+      t += 0.9;
       ordState.binCount = 0;
+      ordState.binByCrop = {};
     }
     dumpT0 = t;
+    dumpTimes.push(t);
     load.forEach(function (br, k) {
       /* le fruit fantôme suit la VRAIE chronologie de sa cueillette : avant le
          vidage il est sur l'arbre / dans la pince / au panier comme les autres,
          jamais au panier dès le début de la mission */
       var orig = null;
       picks2.forEach(function (p2) { if (p2.tree === br.tree && p2.idx === br.idx) orig = p2; });
-      picks2.push({ tree: br.tree, idx: br.idx, t0: orig ? orig.t0 : -100, t1: orig ? orig.t1 : -99, slot: br._slot || basketSlots[k], binSlot: binSlotAt(ordState.binCount + k) });
+      if (orig) { orig.dumpT = t; orig.dumpK = k; }
+      var bcrop = cropOfBr(br);
+      picks2.push({ tree: br.tree, idx: br.idx, t0: orig ? orig.t0 : -100, t1: orig ? orig.t1 : -99, slot: br._slot || basketSlots[k], binSlot: binSlotFor(bcrop, ordState.binByCrop[bcrop] || 0), dumpT: t, dumpK: k });
+      ordState.binByCrop[bcrop] = (ordState.binByCrop[bcrop] || 0) + 1;
       ordState.branchState[branchKey(br.tree, br.idx)] = "bin";
     });
     ordState.binCount += load.length;
@@ -1873,7 +2066,7 @@ function dumpSeq() {
       t += 0.5; /* pause de détection : les yeux scannent le plant */
       list.forEach(function (br) {
         if (got[cropOf(br)] >= wants[cropOf(br)]) return;
-        if (ordState.basketPlaces + placesOf(br) > 15) {
+        if (ordState.basketPlaces + placesOf(br) > BASKET_PLACES) {
           dumpSeq();
           ensureFace(1);
           legTo(stopX, DRIVE_V);
@@ -1883,7 +2076,7 @@ function dumpSeq() {
         ordState.branchState[branchKey(ti, br.idx)] = "basket";
         ordState.basket.push(br);
         ordState.basketPlaces += placesOf(br);
-        picks2.push({ tree: ti, idx: br.idx, t0: t, t1: t + PICK_DUR, slot: slot, binSlot: binSlots[0] });
+        picks2.push({ tree: ti, idx: br.idx, t0: t, t1: t + PICK_DUR, slot: slot, binSlot: binSlots[0], dumpT: Infinity });
         t += PICK_DUR; got[cropOf(br)]++;
       });
     });
@@ -1899,7 +2092,7 @@ function dumpSeq() {
     Object.keys(got).forEach(function (c) { totalGot += got[c]; });
     if (!totalGot) return null;
   } else if (job.kind === "tour") {
-    var farX = field === "grand" ? 28.5 : 11.2;
+    var farX = field === "grand" ? fieldMaxX - 0.5 : 11.2;
     ensureFace(1); legTo(farX, DRIVE_V); t += 1.5;
     ensureFace(-1); legTo(-8.3, RETURN_V);
     ensureFace(1); t += 0.5;
@@ -1907,8 +2100,9 @@ function dumpSeq() {
     var allPlants = fieldData.map(function (td, ti) { return ti; });
     routeOrder(allPlants, x).forEach(function (ti) {
       ensureFace(1);
-      legTo(fieldData[ti].x - 0.78, DRIVE_V);
-      spray2.push({ tree: ti, t0: t, t1: t + 2.6 });
+      legTo(fieldData[ti].x - 0.72, DRIVE_V);
+      var ptype = fieldData[ti].branches.length ? fieldData[ti].branches[0].type : "tomato";
+      spray2.push({ tree: ti, t0: t, t1: t + 2.6, aimY: ptype === "strawberry" ? 0.22 : ptype === "grape" ? 0.55 : 0.72 });
       t += 2.6;
     });
   } else if (job.kind === "dump") {
@@ -1919,7 +2113,7 @@ function dumpSeq() {
     ensureFace(-1); legTo(-8.3, RETURN_V); ensureFace(1);
   }
   if (!legs2.length) legs2.push({ x0: x, x1: x, t0: 0, t1: Math.max(t, 0.1) });
-  return { legs: legs2, picks: picks2, spray: spray2, flips: flips, scans: scans2, human: humanSegs2, T_END: t, dumpT0: dumpT0, faceStart: ordState.face, endX: x, endFace: face, grand: field === "grand" };
+  return { legs: legs2, picks: picks2, spray: spray2, flips: flips, scans: scans2, human: humanSegs2, T_END: t, dumpT0: dumpT0, dumpTimes: dumpTimes, faceStart: ordState.face, endX: x, endFace: face, grand: field === "grand" };
 }
 function jobLabel(job) {
   if (job.kind === "pick") {
@@ -1948,7 +2142,7 @@ function renderQueue() {
   var parts = [];
   if (ordJob) parts.push("▶ " + jobLabel(ordJob));
   ordQueue.forEach(function (job, i) { parts.push((i + 1) + ". " + jobLabel(job)); });
-  ordQueueEl.textContent = parts.length ? t("queue_prefix") + parts.join(" · ") : t("queue_empty");
+  ordQueueEl.textContent = (grownNote ? grownNote + "  ·  " : "") + (parts.length ? t("queue_prefix") + parts.join(" · ") : t("queue_empty"));
   ordBasketEl.textContent = t("basket_line", { n: ordState.basket.length, p: ordState.basketPlaces });
   var n = ordQueue.length + (ordJob ? 1 : 0);
   document.getElementById("ordersRestore").textContent = n ? t("orders_restore_n", { n: n }) : t("orders_restore");
@@ -1977,6 +2171,7 @@ function startNextJob() {
   } else {
     job = ordQueue.shift();
   }
+  if (job.kind === "pick") ensureFieldFor(job.wants || {});
   var plan = buildJobPlan(job);
   if (!plan) {
     ordStatusEl.textContent = job.note || statusForNoop(job);
@@ -1992,9 +2187,12 @@ function startNextJob() {
 }
 function jobDone() {
   var plan = ordJob.plan;
+  var wasPick = ordJob.kind === "pick";
   ordState.pos = plan.endX; ordState.face = plan.endFace;
   if (ordJob.note) ordStatusEl.textContent = ordJob.note;
   ordJob = null;
+  /* arrosage automatique après chaque cueillette : le robot arrose le champ */
+  if (wasPick && !(ordQueue.length && ordQueue[0].kind === "spray")) ordQueue.unshift({ kind: "spray", auto: true });
   if (ordQueue.length) { startNextJob(); return; }
   applyPlan(idlePlan(), false);
   setPlaying(false);
@@ -2006,6 +2204,8 @@ function ordPhaseText() {
   var hs = humanSegAt(T);
   if (hs) {
     if (hs.kind === "signal") return t("phase_signal");
+    if (hs.kind === "stand") return t("phase_human_stand");
+    if (hs.kind === "sit") return t("phase_human_sit");
     if (hs.kind === "empty") return t("phase_human_empty");
     if (hs.kind === "walk") return hs.carry ? t("phase_human_back") : t("phase_human_out");
   }
@@ -2065,7 +2265,7 @@ function showFieldPlants() {
 }
 btnMode.addEventListener("click", function () { if (mode === "cine") enterOrders(); else enterCine(); });
 document.getElementById("ordPick").addEventListener("click", function () {
-  var n = clamp(parseInt(document.getElementById("ordN").value, 10) || 1, 1, 40);
+  var n = clamp(parseInt(document.getElementById("ordN").value, 10) || 1, 1, 500);
   ordQueue.push({ kind: "pick", crop: document.getElementById("ordColor").value, n: n });
   renderQueue();
   if (!ordJob) ordStatusEl.textContent = t("hint_order_added");
@@ -2134,9 +2334,10 @@ function refreshCropSelect() {
   });
 }
 function setField(f) {
-  if (field === f) return;
+  if (field === f && !(f === "grand" && grandGrown)) return;
   field = f;
   ordQueue.length = 0; ordJob = null;
+  if (f === "grand") { rebuildGrandField(GRAND_LAYOUT); grandGrown = false; grownNote = null; }
   resetField();
   ordState.pos = -8.3; ordState.face = 1;
   document.getElementById("fieldSmall").classList.toggle("active", f === "small");
@@ -2227,7 +2428,7 @@ function frame(ts) {
     if (ordJob) {
       var s = ordPhaseText();
       ordStatusEl.textContent = s;
-      counterEl.textContent = t("orders_counter", { s: s, p: ordState.basketPlaces });
+      counterEl.textContent = t("orders_counter", { s: s, p: ordState.basketPlaces }) + " · " + fmtDec(speed) + "×";
     } else {
       counterEl.textContent = t("orders_counter_idle", { n: ordState.basket.length, p: ordState.basketPlaces });
     }
@@ -2256,7 +2457,7 @@ if (params.get("mode") === "orders") {
         : key === "corn" || key === "mais" || key === "maïs" ? "corn"
         : key === "strawberry" || key === "fraise" ? "strawberry"
         : key === "grape" || key === "raisin" ? "grape" : "tomatoR";
-      ordQueue.push({ kind: "pick", crop: crop, n: clamp(parseInt(parts[2], 10) || 3, 1, 40) });
+      ordQueue.push({ kind: "pick", crop: crop, n: clamp(parseInt(parts[2], 10) || 3, 1, 500) });
     } else if (parts[0] === "tour") ordQueue.push({ kind: "tour" });
     else if (parts[0] === "spray" || parts[0] === "arroser") ordQueue.push({ kind: "spray" });
     else if (parts[0] === "dump" || parts[0] === "vider") ordQueue.push({ kind: "dump" });
@@ -2266,6 +2467,28 @@ if (params.get("mode") === "orders") {
   if (params.get("play") === "0") setPlaying(false);
   if (params.get("t")) T = clamp(parseFloat(params.get("t")) || 0, 0, T_END);
 }
+/* diagnostic (console du navigateur) : window.__sim() renvoie l'état interne */
+window.__sim = function () {
+  var tall = {};
+  Object.keys(ordState.branchState).forEach(function (k) { tall[ordState.branchState[k]] = (tall[ordState.branchState[k]] || 0) + 1; });
+  var perCrop = {};
+  grandData.forEach(function (td, ti) {
+    td.branches.forEach(function (br) {
+      var c = cropOfBr(br);
+      var st = ordState.branchState["G" + ti + "-" + br.idx];
+      perCrop[c] = perCrop[c] || { tree: 0, basket: 0, bin: 0 };
+      perCrop[c][st] = (perCrop[c][st] || 0) + 1;
+    });
+  });
+  var placed = { bin: 0, basket: 0, gone: 0, other: 0 };
+  pickedTomatoes.forEach(function (pt) {
+    if (!pt.el.parentNode) placed.gone++;
+    else if (pt.el.parentNode === binTomatoes) placed.bin++;
+    else if (pt.el.parentNode === basketTomatoes) placed.basket++;
+    else placed.other++;
+  });
+  return { T_END: T_END, speed: speed, plants: grandData.length, fieldMaxX: fieldMaxX, grown: grandGrown, grownNote: grownNote, bin: ordState.binCount, binByCrop: ordState.binByCrop, basket: ordState.basket.length, basketPlaces: ordState.basketPlaces, dumpTimes: buildPlan.dumpTimes, placed: placed, job: ordJob ? ordJob.kind : null, jobNote: ordJob ? (ordJob.note || null) : null, states: tall, perCrop: perCrop, status: ordStatusEl.textContent, queue: ordQueueEl.textContent };
+};
 setLang(LANG);
 requestAnimationFrame(frame);
 })();

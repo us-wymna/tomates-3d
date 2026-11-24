@@ -69,6 +69,41 @@
   #endcard p { margin: 4px 0; }
   #endcard button { border: 1px solid #222; background: #222; color: #fff; border-radius: 999px; padding: 9px 18px; font-size: 14px; cursor: pointer; min-height: 42px; margin-top: 8px; }
   #endClose { float: right; border: 1px solid #ccc !important; background: #fff !important; color: #222 !important; border-radius: 999px !important; width: 34px !important; height: 34px !important; min-height: 0 !important; padding: 0 !important; font-size: 16px !important; margin-top: 0 !important; }
+  #hud.orders .row { display: none; }
+  #ui.orders #chapters { display: none; }
+  #orders {
+    display: none;
+    position: fixed; left: 50%; bottom: 104px; transform: translateX(-50%);
+    width: min(560px, 94vw); background: rgba(255,255,255,.97); border-radius: 16px;
+    padding: 12px 14px; z-index: 11; box-shadow: 0 4px 20px rgba(0,0,0,.2);
+    font-size: 14px; color: #222;
+  }
+  #orders.open { display: block; }
+  #orders.collapsed { display: none; }
+  #orders h2 { margin: 0 0 8px; font-size: 16px; }
+  #ordersCollapse { float: right; border: 1px solid #ccc !important; background: #fff !important; color: #222 !important; border-radius: 999px !important; width: 34px !important; height: 34px !important; min-height: 0 !important; padding: 0 !important; font-size: 16px !important; margin-top: 0 !important; }
+  #ordersRestore {
+    display: none;
+    position: fixed; left: 50%; bottom: 104px; transform: translateX(-50%);
+    border: 1px solid #ccc; background: rgba(255,255,255,.97); border-radius: 999px;
+    padding: 9px 16px; font-size: 14px; cursor: pointer; min-height: 42px; z-index: 11;
+    box-shadow: 0 4px 20px rgba(0,0,0,.2);
+  }
+  #ordersRestore.show { display: block; }
+  #orders .orow { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin: 6px 0; }
+  #orders button {
+    border: 1px solid #ccc; background: #fff; border-radius: 999px;
+    padding: 7px 12px; font-size: 14px; cursor: pointer; min-height: 42px; color: #222;
+  }
+  #orders button.primary { background: #222; color: #fff; border-color: #222; }
+  #orders input, #orders select {
+    border: 1px solid #ccc; border-radius: 10px; padding: 8px; font-size: 15px;
+    min-height: 42px; background: #fff; color: #222; width: 64px;
+  }
+  #orders select { width: auto; }
+  #ordStatus { font-size: 13px; color: #333; margin-top: 8px; min-height: 18px; }
+  #ordQueue { font-size: 13px; color: #555; margin-top: 4px; }
+  #ordBasket { font-size: 13px; color: #333; font-weight: 600; }
 </style>
 </head>
 <body>
@@ -79,6 +114,7 @@
   <button id="btnRestart">Recommencer</button>
   <button id="btnSpeed">Vitesse 1×</button>
   <button id="btnCam">Caméra : cinématique</button>
+  <button id="btnMode">📋 Donner des ordres</button>
   <button id="btnZoomOut" title="Zoom arrière">−</button>
   <button id="btnZoomIn" title="Zoom avant">+</button>
   <button id="btnCollapse" title="Réduire la barre">⌃</button>
@@ -94,6 +130,32 @@
   </div>
   <div id="counter">Tomates : 0 / 13</div>
 </div>
+<div id="orders">
+  <button id="ordersCollapse" aria-label="Réduire le panneau">⌃</button>
+  <h2>Donner un ordre au robot</h2>
+  <div class="orow">
+    <span>Cueillir</span>
+    <input id="ordN" type="number" min="1" max="15" value="3">
+    <select id="ordColor">
+      <option value="R">tomates rouges</option>
+      <option value="G">tomates vertes</option>
+    </select>
+    <button id="ordPick" class="primary">Ajouter</button>
+  </div>
+  <div class="orow">
+    <button id="ordTour">Faire le tour du champ</button>
+    <button id="ordSpray">Arroser les arbres</button>
+  </div>
+  <div class="orow">
+    <button id="ordDump">Vider le panier au bac</button>
+    <button id="ordHome">Rentrer à la maison</button>
+    <button id="ordClear">Annuler la file</button>
+  </div>
+  <div id="ordBasket">Panier : 0 / 15</div>
+  <div id="ordQueue">File vide.</div>
+  <div id="ordStatus">En attente d'un ordre.</div>
+</div>
+<button id="ordersRestore">📋 Ordres</button>
 <div id="measure">
   <button id="measureClose" aria-label="Fermer">×</button>
   <h2 id="measureTitle"></h2>
@@ -525,6 +587,12 @@ for (var st = 0; st < 3; st++) {
 }
 /* anneau de mise en évidence (tomate visée) */
 var ring = el("circle", { cx: 0, cy: 0, r: TOM_R + 0.02, fill: "none", stroke: "#ff5a1f", "stroke-width": 0.008, "stroke-dasharray": "0.02 0.012", opacity: 0 }, gFx);
+/* gouttelettes d'arrosage (mode ordres) + jet */
+var sprayJet = el("line", { x1: 0, y1: 0, x2: 0, y2: 0, stroke: "#4aa3df", "stroke-width": 0.014, opacity: 0, "stroke-dasharray": "0.03 0.02", "stroke-linecap": "round" }, gFx);
+var sprayDrops = [];
+for (var sd = 0; sd < 14; sd++) {
+  sprayDrops.push({ el: el("circle", { cx: 0, cy: 0, r: 0.014, fill: "#4aa3df", opacity: 0 }, gFx) });
+}
 /* flèches de mesure (dessinées dans le monde) */
 var dimLines = el("g", {}, gFx);
 
@@ -532,7 +600,8 @@ var dimLines = el("g", {}, gFx);
 var DRIVE_V = 0.65, RETURN_V = 1.0, PICK_DUR = 3.2;
 var stops = TREES.map(function (tr) { return tr.x - 0.78; });
 var legs = [], picks = [], chapters = [];
-var buildPlan = (function () {
+function buildCinePlan() {
+  legs = []; picks = []; chapters = [];
   var t = 1.6;
   function leg(x0, x1, v) {
     var d = Math.abs(x1 - x0), dur = d / v;
@@ -547,7 +616,7 @@ var buildPlan = (function () {
   var firstPick = t;
   TREES.forEach(function (tr, ti) {
     PICK_IDX[ti].forEach(function (bi) {
-      picks.push({ tree: ti, idx: bi, t0: t, t1: t + PICK_DUR });
+      picks.push({ tree: ti, idx: bi, t0: t, t1: t + PICK_DUR, slot: basketSlots[picks.length], binSlot: binSlots[picks.length] });
       t += PICK_DUR;
     });
     if (ti < TREES.length - 1) leg(stops[ti], stops[ti + 1], DRIVE_V);
@@ -563,25 +632,29 @@ var buildPlan = (function () {
   var dumpT0 = t; t += 6.0;
   chapters.push({ t: dumpT0, label: "Vidage au bac" });
   var T_END = t;
-  return { T_END: T_END, revT0: revT0, flipT0: flipT0, dumpT0: dumpT0 };
-})();
-var T_END = buildPlan.T_END;
+  return { legs: legs, picks: picks, T_END: T_END, revT0: revT0, flipT0: flipT0, dumpT0: dumpT0, flips: [{ t0: flipT0 }], faceStart: 1, endX: -3.6, endFace: -1 };
+}
+var buildPlan = null, T_END = 0;
 
 /* slots du panier (coordonnées locales du panier) */
 var basketSlots = [];
 for (var sr = 0; sr < 3; sr++) for (var sc = 0; sc < 5; sc++) {
   basketSlots.push({ x: 0.05 + sc * 0.095, y: 0.055 + sr * 0.105 });
 }
-var pickedTomatoes = []; /* {branch, el, slot, state} */
-picks.forEach(function (pk, pi) {
-  var br = treeData[pk.tree].branches[pk.idx];
-  pickedTomatoes.push({ branch: br, el: br.el, slot: basketSlots[pi], state: "tree", flyT0: 0, flyFrom: null, dumpT0: 0, dumpFrom: null });
-});
+var pickedTomatoes = []; /* {branch, el, slot, binSlot} — reconstruit à chaque plan */
+function rebuildPicked() {
+  pickedTomatoes = picks.map(function (pk) {
+    var br = treeData[pk.tree].branches[pk.idx];
+    return { branch: br, el: br.el, slot: pk.slot, binSlot: pk.binSlot };
+  });
+}
 var binSlots = [];
-for (var br2 = 0; br2 < 3; br2++) for (var bc = 0; bc < 5; bc++) {
+for (var br2 = 0; br2 < 6; br2++) for (var bc = 0; bc < 5; bc++) {
   binSlots.push({ x: BIN.x0 + 0.16 + bc * 0.22, y: 0.055 + br2 * 0.085 });
 }
-pickedTomatoes.forEach(function (pt, i) { pt.binSlot = binSlots[i]; });
+buildPlan = buildCinePlan();
+T_END = buildPlan.T_END;
+rebuildPicked();
 
 function robotXAt(T) {
   for (var i = 0; i < legs.length; i++) {
@@ -590,15 +663,22 @@ function robotXAt(T) {
       var u = smooth((T - lg.t0) / (lg.t1 - lg.t0));
       return lerp(lg.x0, lg.x1, u);
     }
-    if (T < lg.t0) return i === 0 ? -8.3 : legs[i - 1].x1;
+    if (T < lg.t0) return i === 0 ? legs[0].x0 : legs[i - 1].x1;
   }
   return legs[legs.length - 1].x1;
 }
+/* demi-tours du plan courant : chaque entrée bascule le cap (1 → -1 ou inverse) */
+var flipList = [{ t0: buildPlan.flipT0 }];
+var facingStart = 1;
 function facingAt(T) {
-  if (T < buildPlan.flipT0) return 1;
-  if (T > buildPlan.flipT0 + 1.2) return -1;
-  var u = (T - buildPlan.flipT0) / 1.2;
-  return Math.cos(u * Math.PI); /* 1 → -1 en passant par 0 (demi-tour) */
+  var sign = facingStart;
+  for (var i = 0; i < flipList.length; i++) {
+    var ft = flipList[i].t0;
+    if (T < ft) return sign;
+    if (T <= ft + 1.2) { var u = (T - ft) / 1.2; return sign * Math.cos(u * Math.PI); }
+    sign = -sign;
+  }
+  return sign;
 }
 function drivingAt(T) {
   for (var i = 0; i < legs.length; i++) {
@@ -662,15 +742,23 @@ function renderDims() {
     var p = project(activeDims.label.x, activeDims.label.y);
     dimLabel.textContent = activeDims.label.text;
     dimLabel.style.left = clamp(p.x, 80, Math.max(81, viewW - 80)) + "px";
-    dimLabel.style.top = p.y + "px";
+    dimLabel.style.top = Math.max(p.y, 168) + "px"; /* ne passe jamais sous la barre de commandes */
     dimLabel.style.display = "block";
   }
 }
 
 var distTravelled = 0, lastRX = -8.3;
+
+/* ---------- mode ordres : état persistant du champ et de la file ---------- */
+var mode = "cine";
+var spraySegs = []; /* {tree, t0, t1} du plan courant (vide en cinématique) */
+var ordState = { pos: -8.3, face: 1, basket: [], binCount: 0, branchState: {} };
+var ordQueue = []; /* ordres en attente : {kind, ...} */
+var ordJob = null; /* ordre en cours d'exécution */
+
 function updateScene(T) {
   /* porte */
-  var doorU = smooth(T / 2.2);
+  var doorU = mode === "orders" ? 1 : smooth(T / 2.2);
   doorL.setAttribute("transform", "translate(" + (-doorU * 1.28).toFixed(3) + ",0)");
   doorR.setAttribute("transform", "translate(" + (doorU * 1.28).toFixed(3) + ",0)");
   /* nuages (dérive lente, fonction de T pour rester déterministe) */
@@ -774,6 +862,29 @@ function updateScene(T) {
     var mid2 = { x: (from2.x + to2.x) / 2 + 0.05, y: Math.max(from2.y, to2.y) + 0.28 };
     place(gFx, lerp(lerp(from2.x, mid2.x, u2), lerp(mid2.x, to2.x, u2), u2), lerp(lerp(from2.y, mid2.y, u2), lerp(mid2.y, to2.y, u2), u2));
   });
+  /* arrosage (mode ordres) : bras levé vers le feuillage + gouttelettes */
+  var sprayActive = null;
+  spraySegs.forEach(function (sg) { if (T >= sg.t0 && T <= sg.t1) sprayActive = sg; });
+  if (sprayActive) {
+    var treeX = TREES[sprayActive.tree].x;
+    var shS = { x: rx + f * SHOULDER.x, y: SHOULDER.y + bob };
+    var solS = solveArm(treeX - 0.12, 0.72, shS.x, shS.y);
+    armPose = solS; grip = 0; suction = 0;
+    var wS = solS.wrist;
+    sprayJet.setAttribute("x1", wS.x); sprayJet.setAttribute("y1", wS.y);
+    sprayJet.setAttribute("x2", treeX); sprayJet.setAttribute("y2", 0.70);
+    sprayJet.setAttribute("opacity", 0.7);
+    sprayDrops.forEach(function (dp, di) {
+      var ph = ((T - sprayActive.t0) * 1.3 + di / sprayDrops.length) % 1;
+      var dx2 = wS.x + (treeX - wS.x) * ph;
+      var dy2 = wS.y + (0.72 - wS.y) * ph - Math.sin(ph * Math.PI) * 0.10;
+      dp.el.setAttribute("cx", dx2.toFixed(3)); dp.el.setAttribute("cy", dy2.toFixed(3));
+      dp.el.setAttribute("opacity", 0.85);
+    });
+  } else {
+    sprayJet.setAttribute("opacity", 0);
+    sprayDrops.forEach(function (dp) { dp.el.setAttribute("opacity", 0); });
+  }
   /* bras au repos : replié */
   shoulderG.setAttribute("transform", "translate(" + SHOULDER.x + "," + SHOULDER.y + ") rotate(" + (-armPose.phi1 * 180 / Math.PI).toFixed(1) + ")");
   elbowG.setAttribute("transform", "translate(0," + ARM_L1 + ") rotate(" + (-armPose.phi2 * 180 / Math.PI).toFixed(1) + ")");
@@ -791,25 +902,57 @@ var freeMode = false;
 var freeCam = { x: -8, y: 1.2, k: 100 };
 var BLEND = 0.9;
 function followCam(T) { return { x: robotXAt(T) + 0.5, y: 0.55, k: 110 }; }
-var tCue = picks[0].t0, tEndPicks = picks[picks.length - 1].t1;
-var shots = [
-  { t0: 0, t1: tCue, get: function (T) {
+var tCue = 0, tEndPicks = 0;
+function buildShots(cine) {
+  /* arrosage : gros plan sur l'arbre pendant le jet, pour voir les gouttelettes */
+  if (spraySegs.length && !cine) {
+    var bounds = [0];
+    spraySegs.forEach(function (sg) { bounds.push(sg.t0, sg.t1); });
+    bounds.push(T_END + 2);
+    var ss = [];
+    for (var bi = 0; bi < bounds.length - 1; bi++) {
+      (function (t0, t1) {
+        var sg = null;
+        spraySegs.forEach(function (g) { if (t0 >= g.t0 && t0 < g.t1) sg = g; });
+        ss.push({ t0: t0, t1: t1, get: sg ? function () { return { x: TREES[sg.tree].x - 0.42, y: 0.38, k: 230 }; } : followCam });
+      })(bounds[bi], bounds[bi + 1]);
+    }
+    tCue = spraySegs[0].t0; tEndPicks = 0;
+    return ss;
+  }
+  tCue = picks.length ? picks[0].t0 : Infinity;
+  tEndPicks = picks.length ? picks[picks.length - 1].t1 : 0;
+  var hasDump = isFinite(buildPlan.dumpT0);
+  function pickCloseup(T) {
+    var cur = null;
+    picks.forEach(function (pk) { if (T >= pk.t0 && T <= pk.t1) cur = pk; });
+    if (cur) return { x: TREES[cur.tree].x - 0.42, y: 0.38, k: 230 };
+    return followCam(T);
+  }
+  var s = [];
+  if (cine) {
+    s.push({ t0: 0, t1: tCue, get: function (T) {
       var u = smooth(T / Math.max(tCue, 1));
       return { x: lerp(-8.6, -6.8, u), y: lerp(1.35, 1.15, u), k: lerp(80, 88, u) };
-  } },
-  { t0: tCue, t1: tEndPicks, get: function (T) {
-      var cur = null;
-      picks.forEach(function (pk) { if (T >= pk.t0 && T <= pk.t1) cur = pk; });
-      if (cur) return { x: TREES[cur.tree].x - 0.42, y: 0.38, k: 230 };
-      return followCam(T);
-  } },
-  { t0: tEndPicks, t1: buildPlan.dumpT0, get: followCam },
-  { t0: buildPlan.dumpT0, t1: buildPlan.dumpT0 + 5.2, get: function () { return { x: -4.3, y: 0.42, k: 160 }; } },
-  { t0: buildPlan.dumpT0 + 5.2, t1: T_END + 2, get: function (T) {
+    } });
+  } else {
+    s.push({ t0: 0, t1: tCue, get: followCam });
+  }
+  if (picks.length) s.push({ t0: tCue, t1: tEndPicks, get: pickCloseup });
+  if (hasDump) {
+    s.push({ t0: tEndPicks, t1: buildPlan.dumpT0, get: followCam });
+    s.push({ t0: buildPlan.dumpT0, t1: buildPlan.dumpT0 + 5.2, get: function () { return { x: -4.3, y: 0.42, k: 160 }; } });
+    s.push({ t0: buildPlan.dumpT0 + 5.2, t1: T_END + 2, get: function (T) {
+      if (!cine) return followCam(T);
       var u = smooth((T - buildPlan.dumpT0 - 5.2) / 1.5);
       return { x: lerp(-4.3, -0.2, u), y: lerp(0.42, 1.0, u), k: lerp(160, 44, u) };
-  } }
-];
+    } });
+  } else {
+    s.push({ t0: tEndPicks, t1: T_END + 2, get: followCam });
+  }
+  return s;
+}
+var shots = buildShots(true);
 function shotCam(T) {
   var idx = 0;
   for (var i = 0; i < shots.length; i++) if (T >= shots[i].t0) idx = i;
@@ -1006,13 +1149,251 @@ if (window.innerWidth < 560) {
 }
 btnPlay.textContent = playing ? "Pause" : "Lecture";
 
+/* ---------- moteur d'ordres : le robot remplace un employé humain ---------- */
+var ordPanel = document.getElementById("orders");
+var hudEl = document.getElementById("hud");
+var ordStatusEl = document.getElementById("ordStatus");
+var ordQueueEl = document.getElementById("ordQueue");
+var ordBasketEl = document.getElementById("ordBasket");
+var btnMode = document.getElementById("btnMode");
+function branchKey(ti, bi) { return ti + "-" + bi; }
+function resetField() {
+  treeData.forEach(function (td) {
+    td.branches.forEach(function (br) {
+      ordState.branchState[branchKey(br.tree, br.idx)] = "tree";
+      if (br.el.parentNode !== td.g) td.g.appendChild(br.el);
+      br.el.setAttribute("transform", "translate(" + br.localX.toFixed(3) + "," + br.localY.toFixed(3) + ")");
+    });
+  });
+  ordState.basket = [];
+  ordState.binCount = 0;
+  spraySegs = [];
+}
+function idlePlan() {
+  return { legs: [{ x0: ordState.pos, x1: ordState.pos, t0: 0, t1: 0.1 }], picks: [], spray: [], flips: [], T_END: 0.1, dumpT0: Infinity, faceStart: ordState.face, endX: ordState.pos, endFace: ordState.face };
+}
+function applyPlan(p, cine) {
+  legs = p.legs; picks = p.picks; spraySegs = p.spray || [];
+  flipList = p.flips; facingStart = p.faceStart;
+  buildPlan = { T_END: p.T_END, revT0: Infinity, flipT0: p.flips.length ? p.flips[0].t0 : Infinity, dumpT0: p.dumpT0 };
+  T_END = p.T_END;
+  rebuildPicked();
+  shots = buildShots(!!cine);
+  T = 0; ended = false;
+  lastRX = p.legs[0].x0; lastRx = p.legs[0].x0;
+}
+function routeOrder(treesNeeded, x) {
+  var asc = treesNeeded.slice().sort(function (a, b) { return stops[a] - stops[b]; });
+  if (x <= stops[asc[0]]) return asc;
+  if (x >= stops[asc[asc.length - 1]]) return asc.reverse();
+  return (Math.abs(x - stops[asc[0]]) <= Math.abs(x - stops[asc[asc.length - 1]])) ? asc : asc.reverse();
+}
+function buildJobPlan(job) {
+  var legs2 = [], picks2 = [], spray2 = [], flips = [];
+  var t = 0.8, x = ordState.pos, face = ordState.face, dumpT0 = Infinity;
+  function legTo(x1, v) {
+    var d = Math.abs(x1 - x);
+    if (d < 0.01) return;
+    var dur = d / v;
+    legs2.push({ x0: x, x1: x1, t0: t, t1: t + dur });
+    t += dur; x = x1;
+  }
+  function ensureFace(want) {
+    if (face !== want) { flips.push({ t0: t }); t += 1.2; face = want; }
+  }
+  function dumpSeq() {
+    var load = ordState.basket.slice();
+    if (!load.length) return;
+    ensureFace(-1);
+    legTo(-3.6, DRIVE_V);
+    dumpT0 = t;
+    load.forEach(function (br, k) {
+      picks2.push({ tree: br.tree, idx: br.idx, t0: -100, t1: -99, slot: br._slot, binSlot: binSlots[ordState.binCount + k] });
+      ordState.branchState[branchKey(br.tree, br.idx)] = "bin";
+    });
+    ordState.binCount += load.length;
+    ordState.basket = [];
+    t += 6.0;
+  }
+  if (job.kind === "pick") {
+    var want = job.n, got = 0;
+    var avail = [];
+    treeData.forEach(function (td, ti) {
+      td.branches.forEach(function (br) {
+        if (br.col === job.color && ordState.branchState[branchKey(ti, br.idx)] === "tree") avail.push(br);
+      });
+    });
+    var perTree = {};
+    avail.forEach(function (br) { (perTree[br.tree] = perTree[br.tree] || []).push(br); });
+    var treesNeeded = Object.keys(perTree).map(function (k) { return parseInt(k, 10); });
+    routeOrder(treesNeeded, x).forEach(function (ti) {
+      var list = perTree[ti] || [];
+      while (list.length && got < want) {
+        if (ordState.basket.length >= 15) dumpSeq();
+        ensureFace(1);
+        legTo(stops[ti], DRIVE_V);
+        var room = 15 - ordState.basket.length;
+        var take = list.splice(0, Math.min(room, want - got));
+        take.forEach(function (br) {
+          var slot = basketSlots[ordState.basket.length];
+          br._slot = slot;
+          ordState.branchState[branchKey(ti, br.idx)] = "basket";
+          ordState.basket.push(br);
+          picks2.push({ tree: ti, idx: br.idx, t0: t, t1: t + PICK_DUR, slot: slot, binSlot: binSlots[0] });
+          t += PICK_DUR; got++;
+        });
+      }
+    });
+    if (got < want) job.note = "Plus que " + got + " tomate(s) " + (job.color === "R" ? "rouge(s)" : "verte(s)") + " sur le champ.";
+    if (!got) return null;
+  } else if (job.kind === "tour") {
+    ensureFace(1); legTo(11.2, DRIVE_V); t += 1.5;
+    ensureFace(-1); legTo(-8.3, RETURN_V);
+    ensureFace(1); t += 0.5;
+  } else if (job.kind === "spray") {
+    routeOrder([0, 1, 2, 3, 4], x).forEach(function (ti) {
+      ensureFace(1);
+      legTo(stops[ti], DRIVE_V);
+      spray2.push({ tree: ti, t0: t, t1: t + 2.6 });
+      t += 2.6;
+    });
+  } else if (job.kind === "dump") {
+    if (!ordState.basket.length) return null;
+    dumpSeq();
+  } else if (job.kind === "home") {
+    if (Math.abs(x + 8.3) < 0.05 && face === 1) return null;
+    ensureFace(-1); legTo(-8.3, RETURN_V); ensureFace(1);
+  }
+  if (!legs2.length) legs2.push({ x0: x, x1: x, t0: 0, t1: Math.max(t, 0.1) });
+  return { legs: legs2, picks: picks2, spray: spray2, flips: flips, T_END: t, dumpT0: dumpT0, faceStart: ordState.face, endX: x, endFace: face };
+}
+function jobLabel(job) {
+  if (job.kind === "pick") return "Cueillir " + job.n + " " + (job.color === "R" ? "rouges" : "vertes");
+  if (job.kind === "tour") return "Faire le tour du champ";
+  if (job.kind === "spray") return "Arroser les arbres";
+  if (job.kind === "dump") return "Vider le panier au bac";
+  return "Rentrer à la maison";
+}
+function statusForNoop(job) {
+  if (job.kind === "pick") return "Plus de tomates " + (job.color === "R" ? "rouges" : "vertes") + " sur le champ.";
+  if (job.kind === "dump") return "Le panier est déjà vide.";
+  if (job.kind === "home") return "Le robot est déjà à la maison.";
+  return "Ordre terminé.";
+}
+function renderQueue() {
+  var parts = [];
+  if (ordJob) parts.push("▶ " + jobLabel(ordJob));
+  ordQueue.forEach(function (job, i) { parts.push((i + 1) + ". " + jobLabel(job)); });
+  ordQueueEl.textContent = parts.length ? "File : " + parts.join(" · ") : "File vide.";
+  ordBasketEl.textContent = "Panier : " + ordState.basket.length + " / 15";
+  var n = ordQueue.length + (ordJob ? 1 : 0);
+  document.getElementById("ordersRestore").textContent = n ? "📋 Ordres · " + n + " en cours" : "📋 Ordres";
+}
+/* le panneau se replie pendant que le robot travaille (vue dégagée),
+   et se rouvre quand il a fini */
+function collapseOrders() { ordPanel.classList.add("collapsed"); document.getElementById("ordersRestore").classList.add("show"); }
+function expandOrders() { ordPanel.classList.remove("collapsed"); document.getElementById("ordersRestore").classList.remove("show"); }
+document.getElementById("ordersCollapse").addEventListener("click", collapseOrders);
+document.getElementById("ordersRestore").addEventListener("click", expandOrders);
+function startNextJob() {
+  if (ordJob || !ordQueue.length) return;
+  var job = ordQueue[0];
+  var plan = buildJobPlan(job);
+  if (!plan) {
+    ordQueue.shift();
+    ordStatusEl.textContent = job.note || statusForNoop(job);
+    renderQueue();
+    startNextJob();
+    return;
+  }
+  ordQueue.shift();
+  ordJob = job; ordJob.plan = plan;
+  applyPlan(plan, false);
+  setPlaying(true);
+  collapseOrders();
+  renderQueue();
+}
+function jobDone() {
+  var plan = ordJob.plan;
+  ordState.pos = plan.endX; ordState.face = plan.endFace;
+  if (ordJob.note) ordStatusEl.textContent = ordJob.note;
+  ordJob = null;
+  if (ordQueue.length) { startNextJob(); return; }
+  applyPlan(idlePlan(), false);
+  setPlaying(false);
+  expandOrders();
+  renderQueue();
+}
+function ordPhaseText() {
+  if (!ordJob) return "En attente d'un ordre.";
+  var cur = null;
+  picks.forEach(function (pk) { if (T >= pk.t0 && T <= pk.t1) cur = pk; });
+  if (cur) {
+    var br = treeData[cur.tree].branches[cur.idx];
+    return "Cueille 1 tomate " + (br.col === "R" ? "rouge" : "verte") + " — arbre " + (cur.tree + 1) + ".";
+  }
+  var sp = null;
+  spraySegs.forEach(function (sg) { if (T >= sg.t0 && T <= sg.t1) sp = sg; });
+  if (sp) return "Arrose l'arbre " + (sp.tree + 1) + ".";
+  if (isFinite(buildPlan.dumpT0) && T >= buildPlan.dumpT0) return "Vide le panier dans le grand bac.";
+  if (drivingAt(T)) return "En route — " + jobLabel(ordJob).charAt(0).toLowerCase() + jobLabel(ordJob).slice(1) + ".";
+  return jobLabel(ordJob) + "…";
+}
+function enterOrders() {
+  mode = "orders";
+  resetField();
+  ordState.pos = -8.3; ordState.face = 1;
+  ordQueue.length = 0; ordJob = null;
+  ordPanel.classList.add("open");
+  hudEl.classList.add("orders");
+  ui.classList.add("orders");
+  btnMode.textContent = "🎬 Voir la cinématique";
+  endcard.classList.remove("open"); ended = false;
+  applyPlan(idlePlan(), false);
+  setPlaying(false);
+  expandOrders();
+  ordStatusEl.textContent = "En attente d'un ordre.";
+  renderQueue();
+}
+function enterCine() {
+  mode = "cine";
+  resetField();
+  ordPanel.classList.remove("open");
+  document.getElementById("ordersRestore").classList.remove("show");
+  hudEl.classList.remove("orders");
+  ui.classList.remove("orders");
+  btnMode.textContent = "📋 Donner des ordres";
+  applyPlan(buildCinePlan(), true);
+  T = 0; setPlaying(true);
+}
+btnMode.addEventListener("click", function () { if (mode === "cine") enterOrders(); else enterCine(); });
+document.getElementById("ordPick").addEventListener("click", function () {
+  var n = clamp(parseInt(document.getElementById("ordN").value, 10) || 1, 1, 15);
+  ordQueue.push({ kind: "pick", color: document.getElementById("ordColor").value, n: n });
+  renderQueue(); startNextJob();
+});
+document.getElementById("ordTour").addEventListener("click", function () { ordQueue.push({ kind: "tour" }); renderQueue(); startNextJob(); });
+document.getElementById("ordSpray").addEventListener("click", function () { ordQueue.push({ kind: "spray" }); renderQueue(); startNextJob(); });
+document.getElementById("ordDump").addEventListener("click", function () { ordQueue.push({ kind: "dump" }); renderQueue(); startNextJob(); });
+document.getElementById("ordHome").addEventListener("click", function () { ordQueue.push({ kind: "home" }); renderQueue(); startNextJob(); });
+document.getElementById("ordClear").addEventListener("click", function () {
+  ordQueue.length = 0;
+  renderQueue();
+  ordStatusEl.textContent = ordJob ? "File annulée — le robot finit son ordre en cours." : "File annulée.";
+});
+
 /* ---------- boucle ---------- */
 var lastTs = null;
 function frame(ts) {
   if (lastTs === null) lastTs = ts;
   var dt = Math.min((ts - lastTs) / 1000, 0.1);
   lastTs = ts;
-  if (playing && !ended) {
+  if (mode === "orders") {
+    if (playing && ordJob) {
+      T += dt * speed;
+      if (T >= T_END) { T = T_END; jobDone(); }
+    }
+  } else if (playing && !ended) {
     T += dt * speed;
     if (T >= T_END) {
       T = T_END; ended = true; setPlaying(false);
@@ -1023,15 +1404,42 @@ function frame(ts) {
   lastRx = robotXAt(T); lastF = facingAt(T);
   applyCamera(T, dt);
   updateScene(T);
-  scrub.value = (T / T_END * 100).toFixed(1);
-  clockEl.textContent = fmtT(T);
-  var done = picks.filter(function (pk) { return T >= pk.t1; }).length;
-  var reds = 0, greens = 0;
-  picks.forEach(function (pk, i) {
-    if (T >= pk.t1) { if (treeData[pk.tree].branches[pk.idx].col === "R") reds++; else greens++; }
-  });
-  counterEl.textContent = "Tomates : " + done + " / 13 · " + reds + " rouges + " + greens + " vertes";
+  if (mode === "orders") {
+    if (ordJob) {
+      var s = ordPhaseText();
+      ordStatusEl.textContent = s;
+      counterEl.textContent = s + " — Panier : " + ordState.basket.length + " / 15";
+    } else {
+      counterEl.textContent = "Mode ordres — " + ordState.basket.length + " tomate(s) au panier.";
+    }
+    clockEl.textContent = fmtT(T);
+  } else {
+    scrub.value = (T / T_END * 100).toFixed(1);
+    clockEl.textContent = fmtT(T);
+    var done = picks.filter(function (pk) { return T >= pk.t1; }).length;
+    var reds = 0, greens = 0;
+    picks.forEach(function (pk, i) {
+      if (T >= pk.t1) { if (treeData[pk.tree].branches[pk.idx].col === "R") reds++; else greens++; }
+    });
+    counterEl.textContent = "Tomates : " + done + " / 13 · " + reds + " rouges + " + greens + " vertes";
+  }
   requestAnimationFrame(frame);
+}
+if (params.get("mode") === "orders") {
+  enterOrders();
+  params.getAll("order").forEach(function (o) {
+    var parts = o.split(":");
+    if (parts[0] === "pick") {
+      var col = (parts[1] || "red").charAt(0).toLowerCase() === "r" ? "R" : "G";
+      ordQueue.push({ kind: "pick", color: col, n: clamp(parseInt(parts[2], 10) || 3, 1, 15) });
+    } else if (parts[0] === "tour") ordQueue.push({ kind: "tour" });
+    else if (parts[0] === "spray" || parts[0] === "arroser") ordQueue.push({ kind: "spray" });
+    else if (parts[0] === "dump" || parts[0] === "vider") ordQueue.push({ kind: "dump" });
+    else if (parts[0] === "home" || parts[0] === "maison") ordQueue.push({ kind: "home" });
+  });
+  renderQueue(); startNextJob();
+  if (params.get("play") === "0") setPlaying(false);
+  if (params.get("t")) T = clamp(parseFloat(params.get("t")) || 0, 0, T_END);
 }
 requestAnimationFrame(frame);
 })();

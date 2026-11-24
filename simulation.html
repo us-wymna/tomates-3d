@@ -60,14 +60,15 @@
     transform: translate(-50%, -130%);
   }
   #endcard {
-    display: none; position: fixed; inset: 0; z-index: 12;
-    background: rgba(0,0,0,.45); align-items: center; justify-content: center;
+    display: none; position: fixed; left: 50%; bottom: 104px; transform: translateX(-50%);
+    z-index: 12; pointer-events: none; width: min(560px, 94vw);
   }
-  #endcard.open { display: flex; }
-  #endcard .card { background: #fff; border-radius: 16px; padding: 22px 26px; text-align: center; max-width: 88vw; }
-  #endcard h2 { margin: 0 0 8px; }
-  #endcard p { margin: 6px 0; }
-  #endcard button { border: 1px solid #222; background: #222; color: #fff; border-radius: 999px; padding: 10px 20px; font-size: 15px; cursor: pointer; min-height: 44px; margin-top: 10px; }
+  #endcard.open { display: block; }
+  #endcard .card { background: rgba(255,255,255,.96); border-radius: 16px; padding: 14px 18px; text-align: center; box-shadow: 0 4px 20px rgba(0,0,0,.2); pointer-events: auto; }
+  #endcard h2 { margin: 0 0 4px; font-size: 18px; }
+  #endcard p { margin: 4px 0; }
+  #endcard button { border: 1px solid #222; background: #222; color: #fff; border-radius: 999px; padding: 9px 18px; font-size: 14px; cursor: pointer; min-height: 42px; margin-top: 8px; }
+  #endClose { float: right; border: 1px solid #ccc !important; background: #fff !important; color: #222 !important; border-radius: 999px !important; width: 34px !important; height: 34px !important; min-height: 0 !important; padding: 0 !important; font-size: 16px !important; margin-top: 0 !important; }
 </style>
 </head>
 <body>
@@ -102,10 +103,10 @@
 <div id="dimLabel"></div>
 <div id="endcard">
   <div class="card">
+    <button id="endClose" aria-label="Fermer">×</button>
     <h2>Récolte terminée</h2>
     <p id="endText"></p>
     <p>Le panier a été vidé dans le grand bac. L'humain n'a plus qu'à venir récupérer.</p>
-    <p style="font-size:12px;color:#666">Dessin agrandi pour la lisibilité — les mesures affichées sont les vraies.</p>
     <button id="btnReplay">Revoir la récolte</button>
   </div>
 </div>
@@ -821,8 +822,19 @@ function shotCam(T) {
   }
   return c;
 }
-function applyCamera(T) {
-  if (freeMode) { cam.x = freeCam.x; cam.y = freeCam.y; cam.k = freeCam.k; }
+function applyCamera(T, dt) {
+  if (freeMode) {
+    /* suivi auto : la vue bouge avec le robot, même en caméra libre
+       (pas besoin d'écran tactile pour le suivre) ; le glisser manuel
+       de l'utilisateur n'est jamais contrarié pendant le geste */
+    if (!downPos) {
+      var target = robotXAt(T) + 0.5;
+      freeCam.x += (target - freeCam.x) * Math.min(1, (dt || 0.016) * 2.2);
+    }
+    freeCam.x = clamp(freeCam.x, -13, 13);
+    freeCam.y = clamp(freeCam.y, -2, 4.5);
+    cam.x = freeCam.x; cam.y = freeCam.y; cam.k = freeCam.k;
+  }
   else { var c = shotCam(T); cam.x = c.x; cam.y = c.y; cam.k = c.k; }
   world.setAttribute("transform", "translate(" + (viewW / 2 - cam.x * cam.k).toFixed(1) + "," + (viewH / 2 + cam.y * cam.k).toFixed(1) + ") scale(" + cam.k + "," + (-cam.k) + ")");
 }
@@ -904,11 +916,12 @@ function fmtT(t) { return fmtClock(t) + " / " + fmtClock(T_END); }
 function setPlaying(p) {
   playing = p;
   btnPlay.textContent = p ? "Pause" : "Lecture";
-  if (p && ended) { ended = false; endcard.classList.remove("open"); }
+  if (p && ended) { ended = false; endcard.classList.remove("open"); if (T >= T_END) T = 0; }
 }
 btnPlay.addEventListener("click", function () { setPlaying(!playing); });
 document.getElementById("btnRestart").addEventListener("click", function () { T = 0; ended = false; endcard.classList.remove("open"); setPlaying(true); });
 document.getElementById("btnReplay").addEventListener("click", function () { T = 0; ended = false; endcard.classList.remove("open"); setPlaying(true); });
+document.getElementById("endClose").addEventListener("click", function () { endcard.classList.remove("open"); });
 document.getElementById("btnSpeed").addEventListener("click", function () {
   speed = speed === 1 ? 2 : 1;
   document.getElementById("btnSpeed").textContent = "Vitesse " + speed + "×";
@@ -982,6 +995,11 @@ function resize() {
 }
 window.addEventListener("resize", resize);
 resize();
+if (params.get("free") === "1") {
+  setFreeMode(true);
+  var sc0 = shotCam(T);
+  freeCam.x = sc0.x; freeCam.y = sc0.y; freeCam.k = sc0.k;
+}
 if (window.innerWidth < 560) {
   ui.classList.add("collapsed");
   uiRestore.classList.add("show");
@@ -1003,7 +1021,7 @@ function frame(ts) {
     }
   }
   lastRx = robotXAt(T); lastF = facingAt(T);
-  applyCamera(T);
+  applyCamera(T, dt);
   updateScene(T);
   scrub.value = (T / T_END * 100).toFixed(1);
   clockEl.textContent = fmtT(T);

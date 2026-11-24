@@ -1036,6 +1036,7 @@ function updateScene(T) {
   pickedTomatoes.forEach(function (pt, pi) {
     var pk = picks[pi];
     var br = pt.branch;
+    if (!pt.slot || !pt.binSlot || !pk) return; /* jamais de crash ici : la boucle ne doit pas mourir */
     function place(parent, tx, ty) {
       if (pt.el.parentNode !== parent) parent.appendChild(pt.el);
       pt.el.setAttribute("transform", "translate(" + tx.toFixed(3) + "," + ty.toFixed(3) + ")");
@@ -1473,14 +1474,23 @@ function buildJobPlan(job) {
   function ensureFace(want) {
     if (face !== want) { flips.push({ t0: t }); t += 1.2; face = want; }
   }
-  function dumpSeq() {
+function binSlotAt(n) {
+  /* emplacement dans le grand bac, sans limite de nombre (plus de crash passé 30 fruits) */
+  return { x: BIN.x0 + 0.16 + (n % 5) * 0.22, y: 0.055 + Math.floor(n / 5) * 0.085 };
+}
+function dumpSeq() {
     var load = ordState.basket.slice();
     if (!load.length) return;
     ensureFace(-1);
     legTo(-3.6, DRIVE_V);
     dumpT0 = t;
     load.forEach(function (br, k) {
-      picks2.push({ tree: br.tree, idx: br.idx, t0: -100, t1: -99, slot: br._slot, binSlot: binSlots[ordState.binCount + k] });
+      /* le fruit fantôme suit la VRAIE chronologie de sa cueillette : avant le
+         vidage il est sur l'arbre / dans la pince / au panier comme les autres,
+         jamais au panier dès le début de la mission */
+      var orig = null;
+      picks2.forEach(function (p2) { if (p2.tree === br.tree && p2.idx === br.idx) orig = p2; });
+      picks2.push({ tree: br.tree, idx: br.idx, t0: orig ? orig.t0 : -100, t1: orig ? orig.t1 : -99, slot: br._slot || basketSlots[k], binSlot: binSlotAt(ordState.binCount + k) });
       ordState.branchState[branchKey(br.tree, br.idx)] = "bin";
     });
     ordState.binCount += load.length;
@@ -1827,6 +1837,7 @@ document.getElementById("ordSeries").addEventListener("click", function () {
 /* ---------- boucle ---------- */
 var lastTs = null;
 function frame(ts) {
+  requestAnimationFrame(frame); /* en premier : une erreur ne doit jamais arrêter l'animation */
   if (lastTs === null) lastTs = ts;
   var dt = Math.min((ts - lastTs) / 1000, 0.1);
   lastTs = ts;
@@ -1865,7 +1876,6 @@ function frame(ts) {
     });
     counterEl.textContent = "Tomates : " + done + " / 13 · " + reds + " rouges + " + greens + " vertes";
   }
-  requestAnimationFrame(frame);
 }
 if (params.get("mode") === "orders") {
   if (params.get("field") === "grand") setField("grand");

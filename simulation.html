@@ -268,6 +268,10 @@ var STR = {
     phase_pick: "Cueille {item} — plant {n}.", phase_spray: "Arrose le plant {n}.",
     phase_scan: "Je cherche — les yeux scannent le plant {n}.",
     phase_dump: "Vide le panier dans le grand bac.",
+    phase_signal: "🔔 BING BING — le grand bac est plein ! Un humain arrive.",
+    phase_human_out: "Le cultivateur sort de la maison pour vider le grand bac.",
+    phase_human_empty: "Le cultivateur vide le grand bac et le remet en place.",
+    phase_human_back: "Le cultivateur rentre — le robot peut verser à nouveau.",
     phase_drive_hard: "En route — œil avant : {terrain}, force motrice {f} %, ça passe.",
     phase_drive: "En route — {job}.",
     terrain_sun: "terrain sec", terrain_rain: "sol mouillé", terrain_snow: "neige 5 cm", terrain_snow15: "neige 10-20 cm", terrain_sand: "sable",
@@ -345,6 +349,10 @@ var STR = {
     phase_pick: "Picking {item} — plant {n}.", phase_spray: "Watering plant {n}.",
     phase_scan: "Searching — the eyes are scanning plant {n}.",
     phase_dump: "Emptying the basket into the big bin.",
+    phase_signal: "🔔 BING BING — the big bin is full! A human is coming.",
+    phase_human_out: "The farmer comes out of the house to empty the big bin.",
+    phase_human_empty: "The farmer empties the big bin and puts it back.",
+    phase_human_back: "The farmer goes back inside — the robot can pour again.",
     phase_drive_hard: "On the way — front eye: {terrain}, driving force {f}%, it's getting through.",
     phase_drive: "On the way — {job}.",
     terrain_sun: "dry ground", terrain_rain: "wet ground", terrain_snow: "snow 5 cm", terrain_snow15: "snow 10-20 cm", terrain_sand: "sand",
@@ -443,6 +451,7 @@ var PICK_IDX = [[0, 1, 2], [0, 1, 2], [0, 1, 2], [0, 1], [0, 1]]; /* 13 tomates 
 var WHEEL_R = 0.15, SHOULDER = { x: 0.05, y: 0.40 };
 var ARM_L1 = 0.38, ARM_L2 = 0.35;
 var BIN = { x0: -5.1, x1: -3.9, top: 0.60 };
+var BIN_CAP = 30; /* le grand bac est plein à 30 fruits : le cultivateur sort le vider */
 var HOUSE = { x0: -11.5, x1: -6.5, doorX0: -9.6, doorX1: -7.0, wallH: 2.7 };
 
 var app = document.getElementById("app");
@@ -921,6 +930,44 @@ for (var wi = 0; wi <= 10; wi++) {
 el("line", { x1: 0, y1: 0.32, x2: 0.52, y2: 0.32, stroke: "#2b6cb0", "stroke-width": 0.02, "stroke-linecap": "round" }, basketG);
 el("rect", { x: -0.012, y: 0.305, width: 0.07, height: 0.03, rx: 0.01, fill: "#c0392b" }, basketG);
 
+/* ---------- cultivateur (chapeau de paille) : il vide le grand bac quand il est plein ---------- */
+var gHuman = el("g", { opacity: 0 }, world);
+el("ellipse", { cx: 0, cy: 0.012, rx: 0.30, ry: 0.022, fill: "#000000", opacity: 0.14 }, gHuman);
+var legL = el("g", {}, gHuman), legR = el("g", {}, gHuman);
+[legL, legR].forEach(function (lg, i) {
+  var xo = i ? 0.055 : -0.055;
+  lg.setAttribute("transform", "translate(" + xo + ",0.84)");
+  el("rect", { x: -0.052, y: -0.84, width: 0.104, height: 0.84, rx: 0.03, fill: "#3b5b8c" }, lg);
+  el("rect", { x: -0.058, y: -0.84, width: 0.116, height: 0.14, rx: 0.03, fill: "#5a3a22" }, lg);
+});
+var torsoG = el("g", {}, gHuman);
+el("rect", { x: -0.125, y: 0.84, width: 0.25, height: 0.46, rx: 0.05, fill: "#c65a3a" }, torsoG);
+el("rect", { x: -0.125, y: 1.24, width: 0.25, height: 0.06, fill: "#a84a2e" }, torsoG);
+el("rect", { x: -0.02, y: 0.84, width: 0.04, height: 0.46, fill: "#a84a2e", opacity: 0.5 }, torsoG);
+var armL = el("g", {}, gHuman), armR = el("g", {}, gHuman);
+[armL, armR].forEach(function (ag, i) {
+  var xo = i ? 0.15 : -0.15;
+  ag.setAttribute("transform", "translate(" + xo + ",1.26)");
+  el("rect", { x: -0.038, y: -0.52, width: 0.076, height: 0.52, rx: 0.03, fill: "#c65a3a" }, ag);
+  el("circle", { cx: 0, cy: -0.55, r: 0.045, fill: "#e8b98a" }, ag);
+});
+var headG = el("g", {}, gHuman);
+el("circle", { cx: 0.02, cy: 1.44, r: 0.105, fill: "#e8b98a" }, headG);
+el("ellipse", { cx: 0.02, cy: 1.535, rx: 0.205, ry: 0.042, fill: "#e3c878", stroke: "#b89a4a", "stroke-width": 0.008 }, headG);
+el("path", { d: "M-0.095,1.535 Q0.02,1.66 0.135,1.535 Q0.115,1.44 0.02,1.44 Q-0.075,1.44 -0.095,1.535 Z", fill: "#e3c878", stroke: "#b89a4a", "stroke-width": 0.008 }, headG);
+el("rect", { x: -0.085, y: 1.50, width: 0.21, height: 0.035, fill: "#8a6a2f" }, headG);
+/* caisse de récolte portée au retour */
+var crateG = el("g", { opacity: 0 }, gHuman);
+el("rect", { x: 0.10, y: 0.72, width: 0.30, height: 0.20, rx: 0.02, fill: "#a9804f", stroke: "#7a5a30", "stroke-width": 0.008 }, crateG);
+el("circle", { cx: 0.17, cy: 0.94, r: 0.045, fill: "url(#gradRed)" }, crateG);
+el("circle", { cx: 0.26, cy: 0.95, r: 0.045, fill: "url(#gradGreen)" }, crateG);
+el("circle", { cx: 0.34, cy: 0.94, r: 0.045, fill: "url(#gradRed)" }, crateG);
+/* signal BING BING au-dessus du robot */
+var signalG = el("g", { opacity: 0 }, world);
+el("circle", { cx: 0, cy: 1.52, r: 0.055, fill: "#f6c90e", stroke: "#b89a1e", "stroke-width": 0.008 }, signalG);
+el("circle", { cx: 0, cy: 1.52, r: 0.085, fill: "none", stroke: "#f6c90e", "stroke-width": 0.012 }, signalG);
+el("text", { x: 0, y: 1.78, "text-anchor": "middle", "font-size": 0.17, "font-weight": "bold", fill: "#c0392b", stroke: "#ffffff", "stroke-width": 0.014, "paint-order": "stroke", text: "BING BING" }, signalG);
+
 /* bras (cinématique inverse 2 segments) */
 var shoulderG = el("g", { transform: "translate(" + SHOULDER.x + "," + SHOULDER.y + ")" }, robotG);
 el("rect", { x: -0.045, y: -0.055, width: 0.09, height: 0.07, rx: 0.012, fill: "#6b6f73" }, shoulderG);
@@ -1125,10 +1172,25 @@ var distTravelled = 0, lastRX = -8.3;
 var mode = "cine";
 var spraySegs = []; /* {tree, t0, t1} du plan courant (vide en cinématique) */
 var scans = []; /* pauses de détection des yeux {tree, t0, t1} */
+var humanSegs = []; /* séquence du cultivateur {kind: signal|walk|empty, ...} du plan courant */
+var humanCamW = 0, lastHumanSeg = null; /* fondu de la caméra vers le cultivateur */
 var ordState = { pos: -8.3, face: 1, basket: [], basketPlaces: 0, binCount: 0, branchState: {} };
 var ordQueue = []; /* ordres en attente : {kind, ...} */
 var ordJob = null; /* ordre en cours d'exécution */
 
+function humanSegAt(T) {
+  var found = null;
+  humanSegs.forEach(function (sg) { if (T >= sg.t0 && T <= sg.t1) found = sg; });
+  return found;
+}
+function humanXAtSeg(sg, T) {
+  if (!sg) return -4.5;
+  if (sg.kind === "walk") {
+    var u = clamp((T - sg.t0) / Math.max(sg.t1 - sg.t0, 0.001), 0, 1);
+    return lerp(sg.x0, sg.x1, u);
+  }
+  return sg.kind === "empty" ? sg.x : -4.5;
+}
 function updateScene(T) {
   /* porte */
   var doorU = mode === "orders" ? 1 : smooth(T / 2.2);
@@ -1172,6 +1234,41 @@ function updateScene(T) {
   var spinDeg = distTravelled / WHEEL_R * 180 / Math.PI;
   var slip = (hardTerrain() && drivingAt(T)) ? Math.sin(T * 11) * 7 : 0; /* les roues « se débattent » sur terrain difficile */
   wheels.forEach(function (w) { w.spin.setAttribute("transform", "rotate(" + (spinDeg + slip).toFixed(1) + ")"); });
+  /* cultivateur + signal bac plein (mode ordres) */
+  var hs = humanSegAt(T);
+  if (hs && hs.kind === "signal") {
+    gHuman.setAttribute("opacity", 0);
+    signalG.setAttribute("opacity", (Math.floor(T * 4) % 2 === 0) ? 1 : 0.25);
+    signalG.setAttribute("transform", "translate(" + rx.toFixed(3) + ",0)");
+  } else if (hs) {
+    var hx, hface, hwalk = false, hcarry = false, hempty = false;
+    if (hs.kind === "walk") {
+      hx = humanXAtSeg(hs, T); hface = hs.x1 >= hs.x0 ? 1 : -1; hwalk = true; hcarry = !!hs.carry;
+    } else { hx = hs.x; hface = 1; hempty = true; }
+    var sw = hwalk ? Math.sin(T * 7) * 0.38 : 0;
+    var hbob = hwalk ? Math.abs(Math.sin(T * 7)) * 0.02 : 0;
+    gHuman.setAttribute("opacity", 1);
+    gHuman.setAttribute("transform", "translate(" + hx.toFixed(3) + "," + hbob.toFixed(3) + ") scale(" + hface + ",1)");
+    legL.setAttribute("transform", "translate(-0.055,0.84) rotate(" + (sw * 57.3).toFixed(1) + ")");
+    legR.setAttribute("transform", "translate(0.055,0.84) rotate(" + (-sw * 57.3).toFixed(1) + ")");
+    var armA = hempty ? -0.85 : (hwalk ? -sw * 0.7 : 0);
+    var armB = hempty ? -0.85 : (hwalk ? sw * 0.7 : 0);
+    armL.setAttribute("transform", "translate(-0.15,1.26) rotate(" + (armA * 57.3).toFixed(1) + ")");
+    armR.setAttribute("transform", "translate(0.15,1.26) rotate(" + (armB * 57.3).toFixed(1) + ")");
+    crateG.setAttribute("opacity", hcarry ? 1 : 0);
+    signalG.setAttribute("opacity", 0);
+  } else {
+    gHuman.setAttribute("opacity", 0);
+    signalG.setAttribute("opacity", 0);
+  }
+  /* vidage du grand bac par le cultivateur : les fruits s'estompent puis disparaissent pour de bon */
+  var emptyActive = null;
+  humanSegs.forEach(function (sg) {
+    if (sg.kind !== "empty") return;
+    if (T >= sg.t0 && T <= sg.t1) emptyActive = sg;
+    if (T >= sg.t1 && !sg._emptied) { sg._emptied = true; while (binTomatoes.firstChild) binTomatoes.removeChild(binTomatoes.firstChild); }
+  });
+  binTomatoes.setAttribute("opacity", emptyActive ? (1 - smooth((T - emptyActive.t0) / Math.max(emptyActive.t1 - emptyActive.t0, 0.001))).toFixed(3) : 1);
   /* basculement du panier */
   var tiltU = 0;
   if (T >= buildPlan.dumpT0 + 0.6) tiltU = smooth((T - buildPlan.dumpT0 - 0.6) / 1.0);
@@ -1418,6 +1515,19 @@ function applyCamera(T, dt) {
     cam.x = freeCam.x; cam.y = freeCam.y; cam.k = freeCam.k;
   }
   else { var c = shotCam(T); cam.x = c.x; cam.y = c.y; cam.k = c.k; }
+  /* le cultivateur : la caméra s'écarte pour le voir marcher de la maison au bac (mode ordres) */
+  if (mode === "orders") {
+    var hsC = humanSegAt(T);
+    if (hsC && hsC.kind !== "signal") lastHumanSeg = hsC;
+    var wantC = (hsC && hsC.kind !== "signal") ? 1 : 0;
+    humanCamW += (wantC - humanCamW) * Math.min(1, (dt || 0.016) * 4);
+    if (humanCamW > 0.01 && lastHumanSeg) {
+      var hxC = humanXAtSeg(lastHumanSeg, Math.min(Math.max(T, lastHumanSeg.t0), lastHumanSeg.t1));
+      var rxC = robotXAt(T);
+      var hc = { x: (hxC + rxC) / 2 + 0.2, y: 0.55, k: Math.min(cam.k, viewW / (Math.abs(hxC - rxC) + 2.6)) };
+      cam.x = lerp(cam.x, hc.x, humanCamW); cam.y = lerp(cam.y, hc.y, humanCamW); cam.k = lerp(cam.k, hc.k, humanCamW);
+    }
+  }
   world.setAttribute("transform", "translate(" + (viewW / 2 - cam.x * cam.k).toFixed(1) + "," + (viewH / 2 + cam.y * cam.k).toFixed(1) + ") scale(" + cam.k + "," + (-cam.k) + ")");
 }
 
@@ -1639,11 +1749,11 @@ function resetField() {
   spraySegs = [];
 }
 function idlePlan() {
-  return { legs: [{ x0: ordState.pos, x1: ordState.pos, t0: 0, t1: 0.1 }], picks: [], spray: [], flips: [], T_END: 0.1, dumpT0: Infinity, faceStart: ordState.face, endX: ordState.pos, endFace: ordState.face, grand: field === "grand" };
+  return { legs: [{ x0: ordState.pos, x1: ordState.pos, t0: 0, t1: 0.1 }], picks: [], spray: [], flips: [], human: [], T_END: 0.1, dumpT0: Infinity, faceStart: ordState.face, endX: ordState.pos, endFace: ordState.face, grand: field === "grand" };
 }
 function applyPlan(p, cine) {
   fieldData = p.grand ? grandData : treeData;
-  legs = p.legs; picks = p.picks; spraySegs = p.spray || []; scans = p.scans || [];
+  legs = p.legs; picks = p.picks; spraySegs = p.spray || []; scans = p.scans || []; humanSegs = p.human || [];
   flipList = p.flips; facingStart = p.faceStart;
   buildPlan = { T_END: p.T_END, revT0: Infinity, flipT0: p.flips.length ? p.flips[0].t0 : Infinity, dumpT0: p.dumpT0 };
   T_END = p.T_END;
@@ -1670,7 +1780,7 @@ function fruitMatches(br, crop) {
 }
 function buildJobPlan(job) {
   fieldData = field === "grand" ? grandData : treeData;
-  var legs2 = [], picks2 = [], spray2 = [], flips = [], scans2 = [];
+  var legs2 = [], picks2 = [], spray2 = [], flips = [], scans2 = [], humanSegs2 = [];
   var t = 0.8, x = ordState.pos, face = ordState.face, dumpT0 = Infinity;
   function legTo(x1, v) {
     var d = Math.abs(x1 - x);
@@ -1691,6 +1801,21 @@ function dumpSeq() {
     if (!load.length) return;
     ensureFace(-1);
     legTo(-3.6, DRIVE_V);
+    if (ordState.binCount + load.length > BIN_CAP) {
+      /* le grand bac est plein : le robot signale (BING BING), le cultivateur
+         sort de la maison, vide le bac et le remet en place, puis le robot verse */
+      humanSegs2.push({ kind: "signal", t0: t, t1: t + 2.2 });
+      t += 2.2;
+      var doorX = (HOUSE.doorX0 + HOUSE.doorX1) / 2, binX = -4.7;
+      var walkDur = Math.abs(binX - doorX) / 1.2;
+      humanSegs2.push({ kind: "walk", x0: doorX, x1: binX, t0: t, t1: t + walkDur, carry: false });
+      t += walkDur;
+      humanSegs2.push({ kind: "empty", x: binX, t0: t, t1: t + 1.8 });
+      t += 1.8;
+      humanSegs2.push({ kind: "walk", x0: binX, x1: doorX, t0: t, t1: t + walkDur, carry: true });
+      t += walkDur;
+      ordState.binCount = 0;
+    }
     dumpT0 = t;
     load.forEach(function (br, k) {
       /* le fruit fantôme suit la VRAIE chronologie de sa cueillette : avant le
@@ -1766,7 +1891,10 @@ function dumpSeq() {
     Object.keys(wants).forEach(function (c) {
       if (got[c] < wants[c]) notes.push(got[c] + " " + cropLabel(c));
     });
-    if (notes.length) job.note = t("shortfall_prefix") + notes.join(", ") + t("shortfall_suffix");
+    /* « t » est ici le temps local du plan (var t = 0.8) : il masque le traducteur
+       global t() — on lit les chaînes directement dans STR, sinon tout ordre
+       qui dépasse le stock fait planter la page */
+    if (notes.length) job.note = ((STR[LANG] && STR[LANG].shortfall_prefix) || STR.fr.shortfall_prefix) + notes.join(", ") + ((STR[LANG] && STR[LANG].shortfall_suffix) || STR.fr.shortfall_suffix);
     var totalGot = 0;
     Object.keys(got).forEach(function (c) { totalGot += got[c]; });
     if (!totalGot) return null;
@@ -1791,7 +1919,7 @@ function dumpSeq() {
     ensureFace(-1); legTo(-8.3, RETURN_V); ensureFace(1);
   }
   if (!legs2.length) legs2.push({ x0: x, x1: x, t0: 0, t1: Math.max(t, 0.1) });
-  return { legs: legs2, picks: picks2, spray: spray2, flips: flips, scans: scans2, T_END: t, dumpT0: dumpT0, faceStart: ordState.face, endX: x, endFace: face, grand: field === "grand" };
+  return { legs: legs2, picks: picks2, spray: spray2, flips: flips, scans: scans2, human: humanSegs2, T_END: t, dumpT0: dumpT0, faceStart: ordState.face, endX: x, endFace: face, grand: field === "grand" };
 }
 function jobLabel(job) {
   if (job.kind === "pick") {
@@ -1875,6 +2003,12 @@ function jobDone() {
 }
 function ordPhaseText() {
   if (!ordJob) return t("status_waiting");
+  var hs = humanSegAt(T);
+  if (hs) {
+    if (hs.kind === "signal") return t("phase_signal");
+    if (hs.kind === "empty") return t("phase_human_empty");
+    if (hs.kind === "walk") return hs.carry ? t("phase_human_back") : t("phase_human_out");
+  }
   var cur = null;
   picks.forEach(function (pk) { if (T >= pk.t0 && T <= pk.t1) cur = pk; });
   if (cur) {
@@ -2037,12 +2171,37 @@ document.getElementById("ordSeries").addEventListener("click", function () {
 });
 
 /* ---------- boucle ---------- */
+/* BING BING sonore : deux bips quand le robot signale le bac plein (son seulement après un clic, les navigateurs bloquent l'audio automatique) */
+var audioCtx = null;
+function unlockAudio() {
+  try {
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if (audioCtx.state === "suspended") audioCtx.resume();
+  } catch (e) {}
+}
+document.addEventListener("pointerdown", unlockAudio, { passive: true });
+function bingBing() {
+  try {
+    if (!audioCtx) unlockAudio();
+    if (!audioCtx || audioCtx.state !== "running") return;
+    [0, 0.22].forEach(function (delay) {
+      var o = audioCtx.createOscillator(), g = audioCtx.createGain();
+      o.type = "sine"; o.frequency.value = 880;
+      g.gain.setValueAtTime(0.0001, audioCtx.currentTime + delay);
+      g.gain.exponentialRampToValueAtTime(0.18, audioCtx.currentTime + delay + 0.02);
+      g.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + delay + 0.16);
+      o.connect(g); g.connect(audioCtx.destination);
+      o.start(audioCtx.currentTime + delay); o.stop(audioCtx.currentTime + delay + 0.18);
+    });
+  } catch (e) {}
+}
 var lastTs = null;
 function frame(ts) {
   requestAnimationFrame(frame); /* en premier : une erreur ne doit jamais arrêter l'animation */
   if (lastTs === null) lastTs = ts;
   var dt = Math.min((ts - lastTs) / 1000, 0.1);
   lastTs = ts;
+  var prevT = T;
   if (mode === "orders") {
     if (playing && ordJob) {
       T += dt * speed;
@@ -2059,6 +2218,11 @@ function frame(ts) {
   lastRx = robotXAt(T); lastF = facingAt(T);
   applyCamera(T, dt);
   updateScene(T);
+  if (mode === "orders" && playing && ordJob) {
+    humanSegs.forEach(function (sg) {
+      if (sg.kind === "signal" && !sg._beeped && prevT < sg.t0 && T >= sg.t0) { sg._beeped = true; bingBing(); }
+    });
+  }
   if (mode === "orders") {
     if (ordJob) {
       var s = ordPhaseText();

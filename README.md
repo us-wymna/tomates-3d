@@ -1,8 +1,26 @@
 # Tomates 3D modulaires — entraînement du robot à cueillir
 
+## Version 2.1 — pédoncule fixe, tomate détachable par aimants (26 novembre 2026)
+
+La v2.1 est la version actuelle du site (décision finale de Léandre) :
+le pédoncule est FIXE sur la grappe et c'est la TOMATE qui se détache,
+tenue par 2 aimants qui se collent (1 dans la tomate + 1 dans le bout
+du pédoncule, sans cran mécanique). Du tape sur une face d'aimant sert
+de séparateur pour faciliter le détachage. La version « pédoncule
+détachable qui s'arrache avec la tomate » a été abandonnée.
+
+- Visionneuse : `index.html` — fichiers : `stl/tomate-v21.stl`, script
+  `tomates_v21.py`, note `note-conception-v21.md`. La grappe
+  (`stl/grappe-v21.stl`, 12,6 Mo) est trop lourde pour être hébergée
+  ici (rejet 413, comme la v2) : le script la régénère.
+- Aimants : 2 par position, 14 par grappe, 84 par arbre (468 restants).
+- ⚠️ Prise par la pince / aspirateur sur Ø 25 mm non testée ; force de
+  détachage et effet du tape non mesurés — tester 1 tomate + 1 doigt
+  avant les grappes entières.
+
 ## Version 2 — grappes ovales (26 novembre 2026)
 
-La v2 est la version actuelle du site : tomate ovale 35 × Ø 25 mm, 5 sépales,
+La v2 a été remplacée par la v2.1 (ci-dessus) : tomate ovale 35 × Ø 25 mm, 5 sépales,
 1 seul aimant logé tout en haut (retenu par le pin), grappe de 7 tomates
 imprimées séparément (mélange rouges/vertes), crochet en C sur les branches
 de l'arbre v1 (inchangé).

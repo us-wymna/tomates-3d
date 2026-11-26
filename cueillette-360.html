@@ -124,6 +124,7 @@
   'use strict';
   window.addEventListener('error', function (e) { document.title = 'ERR: ' + e.message; });
   var GEOM = window.GEOM;
+  var UP = new THREE.Vector3(0, 1, 0); // défini tôt : placeLimb() est appelé avant l'ancien emplacement (ligne 224) — correctif 26 nov. 2026
 
   /* ---------- textes FR/EN (captions de phases + étiquettes 3D) ---------- */
   var STR = {

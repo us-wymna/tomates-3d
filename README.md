@@ -7,9 +7,10 @@ La v2 est la version actuelle du site : tomate ovale 35 × Ø 25 mm, 5 sépales,
 imprimées séparément (mélange rouges/vertes), crochet en C sur les branches
 de l'arbre v1 (inchangé).
 
-- Visionneuse : `index.html` — fichiers : `stl/tomate-v2.stl`,
-  `stl/grappe-v2.stl`, script `tomates_v2.py`, note `note-conception-v2.md`
-  (dimensions, aimants, assemblage, test de premier article).
+- Visionneuse : `index.html` — fichiers : `stl/tomate-v2.stl`, script
+  `tomates_v2.py`, note `note-conception-v2.md` (dimensions, aimants,
+  assemblage, test de premier article). La grappe (`stl/grappe-v2.stl`,
+  13,6 Mo) est trop lourde pour être hébergée ici : elle est dans le zip v2.
 - ⚠️ La prise par la pince avec la forme ovale Ø 25 mm (v1 : Ø 33 mm) n'a pas
   encore été testée — tester 1 tomate + 1 pin avant les grappes entières.
 - La v1 reste disponible : `v1.html` et ses fichiers. La simulation

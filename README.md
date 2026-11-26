@@ -1,5 +1,21 @@
 # Tomates 3D modulaires — entraînement du robot à cueillir
 
+## Version 2 — grappes ovales (26 novembre 2026)
+
+La v2 est la version actuelle du site : tomate ovale 35 × Ø 25 mm, 5 sépales,
+1 seul aimant logé tout en haut (retenu par le pin), grappe de 7 tomates
+imprimées séparément (mélange rouges/vertes), crochet en C sur les branches
+de l'arbre v1 (inchangé).
+
+- Visionneuse : `index.html` — fichiers : `stl/tomate-v2.stl`,
+  `stl/grappe-v2.stl`, script `tomates_v2.py`, note `note-conception-v2.md`
+  (dimensions, aimants, assemblage, test de premier article).
+- ⚠️ La prise par la pince avec la forme ovale Ø 25 mm (v1 : Ø 33 mm) n'a pas
+  encore été testée — tester 1 tomate + 1 pin avant les grappes entières.
+- La v1 reste disponible : `v1.html` et ses fichiers. La simulation
+  (`simulation.html`) montre toujours la v1.
+
+---
 Tomate creuse en 2 modules (corps + tige) qui s'assemblent par baïonnette, et arbre imprimé en segments. Le robot tire la tomate : elle se détache à l'arbre grâce aux aimants, jamais au milieu.
 
 Ouvre `index.html` (ou le site déployé) pour voir le modèle en 360° et télécharger les fichiers.

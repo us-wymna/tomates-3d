@@ -365,7 +365,7 @@
   var PARK = { x: 120, z: -5 }, APPROACH = { x: 34, z: 12 }, GRIP = { x: 0, z: 12 };
   var PULL = { x: 0, z: -14 }, RETREAT = { x: 55, z: -30 };
   var PULL_MM = 26, GAP0 = 2.2;
-  var p = 0, playing = false, exploded = false, dimsOn = true;
+  var p = 0, playing = false, exploded = true, dimsOn = true; // vue éclatée par défaut (demande de Joseph, 26 nov.)
   function smooth(t) { t = Math.min(1, Math.max(0, t)); return t * t * (3 - 2 * t); }
   function lerp(a, b, t) { return a + (b - a) * t; }
   function targetAt(pp) {
@@ -507,6 +507,7 @@
     btnExplode.classList.toggle('active', exploded);
     if (exploded) setPlaying(false);
   });
+  if (btnExplode) btnExplode.classList.toggle('active', exploded); // état initial : vue éclatée
   var btnLabels = document.getElementById('btnLabels');
   function applyDims() {
     dimObjects.forEach(function (o) { o.visible = dimsOn; });
